@@ -1,0 +1,53 @@
+services:
+  pedri:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: pedri
+
+    # ── Puerto: SOLO accesible desde localhost del host ──
+    # OpenLiteSpeed hará reverse proxy hacia aquí
+    ports:
+      - "127.0.0.1:3001:3001"
+
+    # ── Variables de entorno desde fichero .env ──
+    env_file:
+      - .env
+
+    # ── Volumen para logs persistentes fuera del contenedor ──
+    volumes:
+      - ./logs:/app/logs:rw
+
+    # ── Reinicio automático salvo que se detenga manualmente ──
+    restart: unless-stopped
+
+    # ── Límites de recursos (ajusta según tu VPS) ──
+    deploy:
+      resources:
+        limits:
+          memory: 256M
+          cpus: "0.5"
+
+    # ── Healthcheck (complementa el del Dockerfile) ──
+    healthcheck:
+      test: ["CMD", "wget", "-qO-", "http://127.0.0.1:3001/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 20s
+
+    # ── Sin acceso innecesario ──
+    security_opt:
+      - no-new-privileges:true
+    read_only: false        # false porque escribe logs
+    tmpfs:
+      - /tmp:size=50m       # /tmp en memoria, no en disco
+
+    # ── Red interna aislada ──
+    networks:
+      - pedri_internal
+
+networks:
+  pedri_internal:
+    driver: bridge
+    internal: false   # false: necesita salida a internet para llamar a Anthropic
