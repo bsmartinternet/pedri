@@ -7,14 +7,14 @@
 <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;700;800&family=Literata:ital,wght@0,300;1,300&display=swap" rel="stylesheet">
 <style>
   :root {
-    --bg: #0a0a0f;
-    --surface: #111118;
-    --border: #1e1e28;
-    --border2: #2a2a38;
-    --text: #e8e8f0;
-    --muted: #6b6b80;
-    --accent: #f0c040;
-    --danger: #f04060;
+    --bg: #f4f2ee;
+    --surface: #ffffff;
+    --border: #e2ddd6;
+    --border2: #cec7bd;
+    --text: #1a1916;
+    --muted: #5c564f;
+    --accent: #c49a0e;
+    --danger: #c0392b;
   }
   * { margin:0; padding:0; box-sizing:border-box; }
   body {
@@ -26,16 +26,6 @@
     align-items: center;
     justify-content: center;
     padding: 20px;
-  }
-  body::before {
-    content: '';
-    position: fixed;
-    inset: 0;
-    background-image:
-      linear-gradient(rgba(240,192,64,0.03) 1px, transparent 1px),
-      linear-gradient(90deg, rgba(240,192,64,0.03) 1px, transparent 1px);
-    background-size: 60px 60px;
-    pointer-events: none;
   }
   .login-box {
     position: relative;
@@ -76,8 +66,7 @@
   }
   .field input {
     width: 100%;
-    background: var(--bg);
-    border: 1px solid var(--border2);
+    background: #f9f7f4;border: 1px solid #cec7bd;
     color: var(--text);
     padding: 12px 14px;
     font-family: 'Syne', sans-serif;
@@ -89,7 +78,7 @@
   .btn-login {
     width: 100%;
     background: var(--accent);
-    color: #0a0a0f;
+    color: #fff;
     border: none;
     padding: 14px;
     font-family: 'Syne', sans-serif;
@@ -142,7 +131,7 @@
 </head>
 <body>
 <div class="login-box">
-  <div class="login-logo">Pulse<em>Desk</em></div>
+  <div class="login-logo">PEDRI</div>
   <div class="login-sub">Herramientas internas de contenido con IA</div>
 
   <div class="field">
