@@ -1,167 +1,195 @@
-/* newsletter.js - PEDRI - Sistema de nichos tematicos */
+/* newsletter.js - PEDRI v5 */
 'use strict';
 
-const NICHES = {
+// ═══ LANGUAGES ═══
+// Each language defines UI labels + prompt instruction for Claude
+var LANGUAGES = {
+  'es': { label: 'ES - Espanol',    locale: 'es-ES', promptLang: 'en castellano', flag: 'ES' },
+  'en': { label: 'EN - English',    locale: 'en-GB', promptLang: 'in English',    flag: 'EN' },
+  'it': { label: 'IT - Italiano',   locale: 'it-IT', promptLang: 'in italiano',   flag: 'IT' },
+  'fr': { label: 'FR - Francais',   locale: 'fr-FR', promptLang: 'en francais',   flag: 'FR' },
+  'de': { label: 'DE - Deutsch',    locale: 'de-DE', promptLang: 'auf Deutsch',   flag: 'DE' },
+  'nl': { label: 'NL - Nederlands', locale: 'nl-NL', promptLang: 'in het Nederlands', flag: 'NL' },
+  'be': { label: 'BE - Belgique',   locale: 'fr-BE', promptLang: 'en francais (belgique)', flag: 'BE' },
+};
+
+function getCurrentLang() {
+  var sel = document.getElementById('langSelect');
+  return LANGUAGES[sel ? sel.value : 'es'] || LANGUAGES['es'];
+}
+
+function onLangChange() {
+  // reset if topics already loaded
+  if (currentTopics.length > 0) {
+    selectedIds.clear(); currentTopics = [];
+    document.getElementById('topicsWrap').style.display = 'none';
+    document.getElementById('outputWrap').style.display = 'none';
+    document.getElementById('actionBar').classList.remove('visible');
+  }
+}
+
+// ═══ NICHES ═══
+var NICHES = {
   'email-marketing': {
     label: 'Email Marketing',
-    audience: 'profesionales de email marketing B2B y B2C',
-    tone: 'experto, directo, con datos y recomendaciones accionables',
-    categories: ['Estrategia','Deliverability','IA y Email','Tendencias','Herramientas'],
+    audience: 'email marketing professionals, B2B and B2C',
+    tone: 'expert, data-driven, actionable',
+    categories: ['Strategy','Deliverability','AI & Email','Trends','Tools'],
     topics: [
-      { title:'La IA generativa reduce costes de email marketing un 60% segun nuevo estudio', source:'X / Twitter', engagement:'24.2K menciones', sent:'Positivo', sentClass:'sent-up' },
-      { title:'Open rates B2B caen al 19%: analisis de que esta fallando en 2026', source:'Reddit', engagement:'1.8K upvotes', sent:'Negativo', sentClass:'sent-down' },
-      { title:'Personalizacion con LLMs: casos reales de +45% conversion en nurturing', source:'LinkedIn', engagement:'8.9K impressions', sent:'Positivo', sentClass:'sent-up' },
-      { title:'Google anuncia nuevas restricciones DMARC que afectaran a todos los ESPs en Q2', source:'X / Twitter', engagement:'18.5K menciones', sent:'Negativo', sentClass:'sent-down' },
-      { title:'A/B testing de subject lines con IA: +34% CTR en campana real documentada', source:'Marketing News', engagement:'220 shares', sent:'Positivo', sentClass:'sent-up' },
-      { title:'El resurgir del email plain-text: por que las marcas de lujo abandonan el HTML', source:'Reddit', engagement:'2.4K upvotes', sent:'Mixto', sentClass:'sent-mix' },
-      { title:'Automatizacion de lead nurturing: flujos que convierten en B2B 2026', source:'LinkedIn', engagement:'12K impressions', sent:'Positivo', sentClass:'sent-up' },
+      { title:'AI cuts email marketing costs 60% per new industry study', source:'X / Twitter', sourceUrl:'https://twitter.com/search?q=email+marketing+AI', engagement:'24.2K mentions', sent:'Positive', sentClass:'sent-up' },
+      { title:'B2B open rates fall to 19%: analysis of what is failing in 2026', source:'Reddit', sourceUrl:'https://reddit.com/r/emailmarketing', engagement:'1.8K upvotes', sent:'Negative', sentClass:'sent-down' },
+      { title:'LLM personalization: real cases showing +45% nurturing conversion', source:'LinkedIn', sourceUrl:'https://linkedin.com', engagement:'8.9K impressions', sent:'Positive', sentClass:'sent-up' },
+      { title:'Google announces new DMARC rules affecting all ESPs in Q2', source:'X / Twitter', sourceUrl:'https://twitter.com/search?q=DMARC+2026', engagement:'18.5K mentions', sent:'Negative', sentClass:'sent-down' },
+      { title:'AI subject line A/B testing: +34% CTR in documented real campaign', source:'Marketing News', sourceUrl:'https://marketingnews.com', engagement:'220 shares', sent:'Positive', sentClass:'sent-up' },
+      { title:'Plain-text email revival: why luxury brands are ditching HTML', source:'Reddit', sourceUrl:'https://reddit.com/r/emailmarketing', engagement:'2.4K upvotes', sent:'Mixed', sentClass:'sent-mix' },
+      { title:'Cold lead nurturing automation: flows that convert in B2B 2026', source:'LinkedIn', sourceUrl:'https://linkedin.com', engagement:'12K impressions', sent:'Positive', sentClass:'sent-up' },
     ],
   },
   'ia-tecnologia': {
-    label: 'IA & Tecnologia',
-    audience: 'profesionales tech, desarrolladores y entusiastas de la IA',
-    tone: 'tecnico pero accesible, con casos practicos y analisis critico',
-    categories: ['IA Generativa','Herramientas','Industria','Investigacion','Productividad'],
+    label: 'AI & Technology',
+    audience: 'tech professionals, developers and AI enthusiasts',
+    tone: 'technical but accessible, with practical cases and critical analysis',
+    categories: ['Generative AI','Tools','Industry','Research','Productivity'],
     topics: [
-      { title:'GPT-5 supera a humanos en razonamiento complejo segun nuevos benchmarks', source:'X / Twitter', engagement:'142K menciones', sent:'Positivo', sentClass:'sent-up' },
-      { title:'Anthropic publica investigacion sobre interpretabilidad de modelos grandes', source:'Hacker News', engagement:'3.2K upvotes', sent:'Positivo', sentClass:'sent-up' },
-      { title:'Por que los agentes de IA siguen fallando en produccion: analisis tecnico', source:'Reddit', engagement:'5.8K upvotes', sent:'Mixto', sentClass:'sent-mix' },
-      { title:'Europa aprueba nuevas regulaciones de IA de alto riesgo: que cambia para tu empresa', source:'Tech News', engagement:'890 shares', sent:'Negativo', sentClass:'sent-down' },
-      { title:'Cursor vs GitHub Copilot 2026: comparativa real tras 6 meses de uso', source:'Reddit', engagement:'7.1K upvotes', sent:'Mixto', sentClass:'sent-mix' },
-      { title:'Los modelos de razonamiento reducen costes de automatizacion un 40% en empresas', source:'LinkedIn', engagement:'15K impressions', sent:'Positivo', sentClass:'sent-up' },
-      { title:'Apple Intelligence decepciona: analisis de por que llega tarde y que significa', source:'X / Twitter', engagement:'89K menciones', sent:'Negativo', sentClass:'sent-down' },
+      { title:'GPT-5 outperforms humans in complex reasoning per new benchmarks', source:'X / Twitter', sourceUrl:'https://twitter.com/search?q=GPT5', engagement:'142K mentions', sent:'Positive', sentClass:'sent-up' },
+      { title:'Anthropic publishes interpretability research on large models', source:'Hacker News', sourceUrl:'https://news.ycombinator.com', engagement:'3.2K upvotes', sent:'Positive', sentClass:'sent-up' },
+      { title:'Why AI agents keep failing in production: technical analysis', source:'Reddit', sourceUrl:'https://reddit.com/r/MachineLearning', engagement:'5.8K upvotes', sent:'Mixed', sentClass:'sent-mix' },
+      { title:'EU approves high-risk AI regulations: what changes for your company', source:'Tech News', sourceUrl:'https://techcrunch.com', engagement:'890 shares', sent:'Negative', sentClass:'sent-down' },
+      { title:'Cursor vs GitHub Copilot 2026: real comparison after 6 months of use', source:'Reddit', sourceUrl:'https://reddit.com/r/programming', engagement:'7.1K upvotes', sent:'Mixed', sentClass:'sent-mix' },
+      { title:'Reasoning models cut automation costs 40% in mid-market companies', source:'LinkedIn', sourceUrl:'https://linkedin.com', engagement:'15K impressions', sent:'Positive', sentClass:'sent-up' },
+      { title:'Apple Intelligence disappoints: why it is late and what it means', source:'X / Twitter', sourceUrl:'https://twitter.com/search?q=apple+intelligence', engagement:'89K mentions', sent:'Negative', sentClass:'sent-down' },
     ],
   },
   'ecommerce': {
     label: 'eCommerce & Retail',
-    audience: 'gestores de tiendas online, directores de ecommerce y retailers',
-    tone: 'practico, orientado a conversion y resultados de negocio',
-    categories: ['Conversion','Logistica','IA y Retail','Tendencias','Plataformas'],
+    audience: 'online store managers, ecommerce directors and retailers',
+    tone: 'practical, conversion-focused, business results oriented',
+    categories: ['Conversion','Logistics','AI & Retail','Trends','Platforms'],
     topics: [
-      { title:'Amazon lanza IA generativa para paginas de producto: +23% conversion en beta', source:'Ecommerce News', engagement:'4.5K shares', sent:'Positivo', sentClass:'sent-up' },
-      { title:'TikTok Shop supera a Instagram Shopping en ventas directas en Europa', source:'X / Twitter', engagement:'67K menciones', sent:'Positivo', sentClass:'sent-up' },
-      { title:'El abandono de carrito sube al 78%: nuevas estrategias de recuperacion que funcionan', source:'Reddit', engagement:'2.1K upvotes', sent:'Negativo', sentClass:'sent-down' },
-      { title:'Shopify vs WooCommerce 2026: que plataforma gana en coste total de propiedad', source:'Reddit', engagement:'3.8K upvotes', sent:'Mixto', sentClass:'sent-mix' },
-      { title:'Personalizacion dinamica con IA: tienda online multiplica por 3 su LTV medio', source:'LinkedIn', engagement:'22K impressions', sent:'Positivo', sentClass:'sent-up' },
-      { title:'Costes de logistica last-mile suben un 18% en Q1: como proteger margenes', source:'Ecommerce News', engagement:'1.2K shares', sent:'Negativo', sentClass:'sent-down' },
+      { title:'Amazon launches generative AI for product pages: +23% conversion in beta', source:'Ecommerce News', sourceUrl:'https://ecommercenews.eu', engagement:'4.5K shares', sent:'Positive', sentClass:'sent-up' },
+      { title:'TikTok Shop overtakes Instagram Shopping in direct sales in Europe', source:'X / Twitter', sourceUrl:'https://twitter.com/search?q=tiktok+shop+europe', engagement:'67K mentions', sent:'Positive', sentClass:'sent-up' },
+      { title:'Cart abandonment rises to 78%: new recovery strategies that work', source:'Reddit', sourceUrl:'https://reddit.com/r/ecommerce', engagement:'2.1K upvotes', sent:'Negative', sentClass:'sent-down' },
+      { title:'Shopify vs WooCommerce 2026: which platform wins on total cost of ownership', source:'Reddit', sourceUrl:'https://reddit.com/r/ecommerce', engagement:'3.8K upvotes', sent:'Mixed', sentClass:'sent-mix' },
+      { title:'Dynamic AI personalization: online store triples average LTV', source:'LinkedIn', sourceUrl:'https://linkedin.com', engagement:'22K impressions', sent:'Positive', sentClass:'sent-up' },
+      { title:'Last-mile logistics costs up 18% in Q1: how to protect margins', source:'Ecommerce News', sourceUrl:'https://ecommercenews.eu', engagement:'1.2K shares', sent:'Negative', sentClass:'sent-down' },
     ],
   },
   'marketing-digital': {
-    label: 'Marketing Digital',
-    audience: 'marketers digitales, growth hackers y directores de marketing',
-    tone: 'estrategico, con datos y ejemplos de campanas reales',
-    categories: ['SEO','Paid Media','Contenido','Social','Analitica'],
+    label: 'Digital Marketing',
+    audience: 'digital marketers, growth hackers and marketing directors',
+    tone: 'strategic, data-driven, with real campaign examples',
+    categories: ['SEO','Paid Media','Content','Social','Analytics'],
     topics: [
-      { title:'Google actualiza algoritmo core: webs de contenido caen un 30% de media', source:'X / Twitter', engagement:'95K menciones', sent:'Negativo', sentClass:'sent-down' },
-      { title:'Meta Ads sube CPM un 22% en Q1 2026: estrategias para mantener ROAS positivo', source:'LinkedIn', engagement:'18K impressions', sent:'Negativo', sentClass:'sent-down' },
-      { title:'El contenido largo vuelve a rankear: analisis de 10.000 articulos post-update', source:'Reddit', engagement:'4.2K upvotes', sent:'Positivo', sentClass:'sent-up' },
-      { title:'LinkedIn Thought Leadership Ads: CPL un 40% menor que Search en B2B', source:'Marketing News', engagement:'780 shares', sent:'Positivo', sentClass:'sent-up' },
-      { title:'Dark social representa el 60% del trafico referral: como medirlo en 2026', source:'Reddit', engagement:'3.1K upvotes', sent:'Mixto', sentClass:'sent-mix' },
-      { title:'Influencer marketing B2B: casos con ROI documentado en LinkedIn', source:'LinkedIn', engagement:'31K impressions', sent:'Positivo', sentClass:'sent-up' },
+      { title:'Google core algorithm update: content sites down 30% on average', source:'X / Twitter', sourceUrl:'https://twitter.com/search?q=google+core+update', engagement:'95K mentions', sent:'Negative', sentClass:'sent-down' },
+      { title:'Meta Ads CPM up 22% in Q1 2026: strategies to maintain positive ROAS', source:'LinkedIn', sourceUrl:'https://linkedin.com', engagement:'18K impressions', sent:'Negative', sentClass:'sent-down' },
+      { title:'Long-form content ranking again: analysis of 10K articles post-update', source:'Reddit', sourceUrl:'https://reddit.com/r/SEO', engagement:'4.2K upvotes', sent:'Positive', sentClass:'sent-up' },
+      { title:'LinkedIn Thought Leadership Ads: CPL 40% lower than Search in B2B', source:'Marketing News', sourceUrl:'https://marketingnews.com', engagement:'780 shares', sent:'Positive', sentClass:'sent-up' },
+      { title:'Dark social is now 60% of referral traffic: how to measure it in 2026', source:'Reddit', sourceUrl:'https://reddit.com/r/marketing', engagement:'3.1K upvotes', sent:'Mixed', sentClass:'sent-mix' },
+      { title:'B2B influencer marketing: cases with documented ROI on LinkedIn', source:'LinkedIn', sourceUrl:'https://linkedin.com', engagement:'31K impressions', sent:'Positive', sentClass:'sent-up' },
     ],
   },
   'startups': {
-    label: 'Startups & Negocios',
-    audience: 'fundadores, inversores, emprendedores y profesionales del ecosistema startup',
-    tone: 'directo, inspirador, con lecciones practicas y sin corporativo',
-    categories: ['Financiacion','Producto','Crecimiento','Cultura','Mercado'],
+    label: 'Startups & Business',
+    audience: 'founders, investors, entrepreneurs and startup ecosystem professionals',
+    tone: 'direct, inspiring, with practical lessons and no corporate fluff',
+    categories: ['Funding','Product','Growth','Culture','Market'],
     topics: [
-      { title:'Y Combinator S26: las tendencias que estan financiando ahora', source:'X / Twitter', engagement:'78K menciones', sent:'Positivo', sentClass:'sent-up' },
-      { title:'El 73% de startups que levantaron en 2021 no levantaran de nuevo: analisis', source:'TechCrunch', engagement:'5.6K shares', sent:'Negativo', sentClass:'sent-down' },
-      { title:'De 0 a 1M ARR en 11 meses sin inversion: el playbook de un SaaS bootstrapped', source:'Reddit', engagement:'9.2K upvotes', sent:'Positivo', sentClass:'sent-up' },
-      { title:'VCs reducen cheques en Series A: que significa para los fundadores ahora', source:'LinkedIn', engagement:'42K impressions', sent:'Negativo', sentClass:'sent-down' },
-      { title:'Product-led growth en B2B: las metricas que importan segun 50 fundadores', source:'Reddit', engagement:'6.8K upvotes', sent:'Positivo', sentClass:'sent-up' },
-      { title:'El solopreneur de IA: como una persona construye negocios de 7 cifras', source:'X / Twitter', engagement:'112K menciones', sent:'Mixto', sentClass:'sent-mix' },
+      { title:'Y Combinator S26: the trends they are funding right now', source:'X / Twitter', sourceUrl:'https://twitter.com/ycombinator', engagement:'78K mentions', sent:'Positive', sentClass:'sent-up' },
+      { title:'73% of 2021 startups will not raise again: post-mortem analysis', source:'TechCrunch', sourceUrl:'https://techcrunch.com', engagement:'5.6K shares', sent:'Negative', sentClass:'sent-down' },
+      { title:'0 to $1M ARR in 11 months without investment: the full bootstrapped SaaS playbook', source:'Reddit', sourceUrl:'https://reddit.com/r/SaaS', engagement:'9.2K upvotes', sent:'Positive', sentClass:'sent-up' },
+      { title:'VCs shrinking Series A checks: what it means for founders now', source:'LinkedIn', sourceUrl:'https://linkedin.com', engagement:'42K impressions', sent:'Negative', sentClass:'sent-down' },
+      { title:'Product-led growth in B2B: the metrics that matter per 50 founders', source:'Reddit', sourceUrl:'https://reddit.com/r/startups', engagement:'6.8K upvotes', sent:'Positive', sentClass:'sent-up' },
+      { title:'The AI solopreneur: how one person is building 7-figure businesses', source:'X / Twitter', sourceUrl:'https://twitter.com/search?q=solopreneur+AI', engagement:'112K mentions', sent:'Mixed', sentClass:'sent-mix' },
     ],
   },
   'finanzas': {
-    label: 'Finanzas & Economia',
-    audience: 'inversores particulares, analistas financieros y profesionales de finanzas',
-    tone: 'analitico, riguroso, con contexto macro y perspectiva accionable',
-    categories: ['Mercados','Macro','Inversion','Cripto','Fintech'],
+    label: 'Finance & Economy',
+    audience: 'individual investors, financial analysts and finance professionals',
+    tone: 'analytical, rigorous, with macro context and actionable perspective',
+    categories: ['Markets','Macro','Investment','Crypto','Fintech'],
     topics: [
-      { title:'La Fed mantiene tipos: que dicen los datos de inflacion de marzo', source:'Bloomberg', engagement:'23K shares', sent:'Mixto', sentClass:'sent-mix' },
-      { title:'Bitcoin supera los 120K: los argumentos de bulls y bears ahora mismo', source:'X / Twitter', engagement:'340K menciones', sent:'Positivo', sentClass:'sent-up' },
-      { title:'Banca europea reduce dividendos ante riesgos de credito: analisis por sectores', source:'Financial News', engagement:'3.4K shares', sent:'Negativo', sentClass:'sent-down' },
-      { title:'ETFs de IA superan al S&P 500 por segundo anio consecutivo', source:'Reddit', engagement:'8.9K upvotes', sent:'Positivo', sentClass:'sent-up' },
-      { title:'El yuan digital avanza: China procesa el 18% de pagos internacionales con CBDC', source:'Bloomberg', engagement:'12K shares', sent:'Mixto', sentClass:'sent-mix' },
+      { title:'Fed holds rates: what March inflation data is telling us', source:'Bloomberg', sourceUrl:'https://bloomberg.com', engagement:'23K shares', sent:'Mixed', sentClass:'sent-mix' },
+      { title:'Bitcoin breaks $120K: the bull and bear arguments right now', source:'X / Twitter', sourceUrl:'https://twitter.com/search?q=bitcoin', engagement:'340K mentions', sent:'Positive', sentClass:'sent-up' },
+      { title:'European banks cut dividends on credit risk: sector-by-sector analysis', source:'Financial News', sourceUrl:'https://ft.com', engagement:'3.4K shares', sent:'Negative', sentClass:'sent-down' },
+      { title:'AI ETFs outperform S&P 500 for second consecutive year', source:'Reddit', sourceUrl:'https://reddit.com/r/investing', engagement:'8.9K upvotes', sent:'Positive', sentClass:'sent-up' },
+      { title:'Digital yuan advances: China processes 18% of international payments with CBDC', source:'Bloomberg', sourceUrl:'https://bloomberg.com', engagement:'12K shares', sent:'Mixed', sentClass:'sent-mix' },
     ],
   },
   'salud': {
-    label: 'Salud & Bienestar',
-    audience: 'personas interesadas en salud, profesionales sanitarios y emprendedores health',
-    tone: 'cercano, basado en evidencia, con consejos practicos y sin alarmismo',
-    categories: ['Investigacion','Nutricion','Salud Mental','Tecnologia Salud','Estilo de Vida'],
+    label: 'Health & Wellness',
+    audience: 'health enthusiasts, healthcare professionals and health entrepreneurs',
+    tone: 'approachable, evidence-based, practical and non-alarmist',
+    categories: ['Research','Nutrition','Mental Health','Health Tech','Lifestyle'],
     topics: [
-      { title:'Harvard: dormir 7 horas reduce riesgo cardiovascular un 34%', source:'Health News', engagement:'156K menciones', sent:'Positivo', sentClass:'sent-up' },
-      { title:'IA diagnostica cancer de pulmon en fase 0 con 94% precision: primer ensayo', source:'X / Twitter', engagement:'89K menciones', sent:'Positivo', sentClass:'sent-up' },
-      { title:'El 58% de trabajadores en riesgo alto de burnout: estudio europeo 2026', source:'LinkedIn', engagement:'34K impressions', sent:'Negativo', sentClass:'sent-down' },
-      { title:'Ozempic y la paradoja del musculo: lo que los medicos no estan explicando', source:'Reddit', engagement:'12.4K upvotes', sent:'Mixto', sentClass:'sent-mix' },
-      { title:'Los 5 alimentos que la ciencia confirma que transforman tu microbioma intestinal', source:'Health News', engagement:'4.2K shares', sent:'Positivo', sentClass:'sent-up' },
+      { title:'Harvard: 7 hours of sleep reduces cardiovascular risk by 34%', source:'Health News', sourceUrl:'https://health.harvard.edu', engagement:'156K mentions', sent:'Positive', sentClass:'sent-up' },
+      { title:'AI detects stage-0 lung cancer with 94% accuracy: first clinical trial', source:'X / Twitter', sourceUrl:'https://twitter.com/search?q=AI+cancer+detection', engagement:'89K mentions', sent:'Positive', sentClass:'sent-up' },
+      { title:'58% of workers at high burnout risk: European 2026 study', source:'LinkedIn', sourceUrl:'https://linkedin.com', engagement:'34K impressions', sent:'Negative', sentClass:'sent-down' },
+      { title:'Ozempic and the muscle paradox: what doctors are not explaining well', source:'Reddit', sourceUrl:'https://reddit.com/r/health', engagement:'12.4K upvotes', sent:'Mixed', sentClass:'sent-mix' },
+      { title:'The 5 foods science confirms transform your gut microbiome', source:'Health News', sourceUrl:'https://health.harvard.edu', engagement:'4.2K shares', sent:'Positive', sentClass:'sent-up' },
     ],
   },
   'viajes': {
-    label: 'Viajes & Turismo',
-    audience: 'viajeros frecuentes, nomadas digitales y profesionales del turismo',
-    tone: 'inspirador, con tips practicos y perspectiva de viajero experimentado',
-    categories: ['Destinos','Tendencias','Tecnologia Viajes','Sostenibilidad','Trabajo Remoto'],
+    label: 'Travel & Tourism',
+    audience: 'frequent travelers, digital nomads and tourism professionals',
+    tone: 'inspiring, with practical tips and experienced traveler perspective',
+    categories: ['Destinations','Trends','Travel Tech','Sustainability','Remote Work'],
     topics: [
-      { title:'Los 10 destinos menos masificados de Europa que explotan en 2026', source:'Travel News', engagement:'67K menciones', sent:'Positivo', sentClass:'sent-up' },
-      { title:'Japon limita acceso al Monte Fuji: el debate sobre el turismo de masas', source:'X / Twitter', engagement:'234K menciones', sent:'Mixto', sentClass:'sent-mix' },
-      { title:'Nomadas digitales en Espana: ciudades que ofrecen visados y beneficios reales', source:'Reddit', engagement:'18.6K upvotes', sent:'Positivo', sentClass:'sent-up' },
-      { title:'Aerolineas low cost suben precios un 31%: estrategias para seguir viajando barato', source:'Reddit', engagement:'9.4K upvotes', sent:'Negativo', sentClass:'sent-down' },
-      { title:'IA para planificar viajes: comparativa de Gemini vs ChatGPT vs Claude', source:'Travel News', engagement:'3.1K shares', sent:'Mixto', sentClass:'sent-mix' },
+      { title:'Top 10 least crowded European destinations exploding in 2026', source:'Travel News', sourceUrl:'https://travelnews.com', engagement:'67K mentions', sent:'Positive', sentClass:'sent-up' },
+      { title:'Japan limits Mount Fuji access: the overtourism debate', source:'X / Twitter', sourceUrl:'https://twitter.com/search?q=japan+fuji+tourism', engagement:'234K mentions', sent:'Mixed', sentClass:'sent-mix' },
+      { title:'Digital nomads in Spain: cities offering real visas and benefits', source:'Reddit', sourceUrl:'https://reddit.com/r/digitalnomad', engagement:'18.6K upvotes', sent:'Positive', sentClass:'sent-up' },
+      { title:'Low-cost airlines raising prices 31%: strategies to keep traveling cheap', source:'Reddit', sourceUrl:'https://reddit.com/r/travel', engagement:'9.4K upvotes', sent:'Negative', sentClass:'sent-down' },
+      { title:'AI trip planning: honest comparison of Gemini vs ChatGPT vs Claude', source:'Travel News', sourceUrl:'https://travelnews.com', engagement:'3.1K shares', sent:'Mixed', sentClass:'sent-mix' },
     ],
   },
   'deporte': {
-    label: 'Deporte & Fitness',
-    audience: 'entusiastas del deporte, atletas amateur y profesionales del fitness',
-    tone: 'motivador, basado en ciencia del deporte, con tips practicos',
-    categories: ['Entrenamiento','Nutricion Deportiva','Tecnologia','Competicion','Recuperacion'],
+    label: 'Sport & Fitness',
+    audience: 'sport enthusiasts, amateur athletes, coaches and fitness professionals',
+    tone: 'motivating, science-based, practical and direct',
+    categories: ['Training','Sports Nutrition','Technology','Competition','Recovery'],
     topics: [
-      { title:'El protocolo del equipo olimpico de atletismo de EEUU: detalles filtrados', source:'Reddit', engagement:'34K upvotes', sent:'Positivo', sentClass:'sent-up' },
-      { title:'Creatina en mujeres: metaanalisis de 47 estudios confirma los mismos beneficios', source:'Sports News', engagement:'12K shares', sent:'Positivo', sentClass:'sent-up' },
-      { title:'Cardio en ayunas: lo que dice la ciencia vs los influencers de fitness', source:'X / Twitter', engagement:'56K menciones', sent:'Mixto', sentClass:'sent-mix' },
-      { title:'Whoop 5 vs Oura Ring 4: comparativa tras 3 meses de test paralelo real', source:'Reddit', engagement:'8.9K upvotes', sent:'Mixto', sentClass:'sent-mix' },
-      { title:'Por que el 80% abandona el gimnasio antes de 3 meses: psicologia del habito', source:'Sports News', engagement:'5.6K shares', sent:'Negativo', sentClass:'sent-down' },
+      { title:'US Olympic athletics team training protocol: leaked details', source:'Reddit', sourceUrl:'https://reddit.com/r/athletics', engagement:'34K upvotes', sent:'Positive', sentClass:'sent-up' },
+      { title:'Creatine in women: meta-analysis of 47 studies confirms same benefits as men', source:'Sports News', sourceUrl:'https://sportsnews.com', engagement:'12K shares', sent:'Positive', sentClass:'sent-up' },
+      { title:'Fasted cardio: what the science says vs fitness influencers', source:'X / Twitter', sourceUrl:'https://twitter.com/search?q=fasted+cardio+science', engagement:'56K mentions', sent:'Mixed', sentClass:'sent-mix' },
+      { title:'Whoop 5 vs Oura Ring 4: comparison after 3 months of parallel testing', source:'Reddit', sourceUrl:'https://reddit.com/r/running', engagement:'8.9K upvotes', sent:'Mixed', sentClass:'sent-mix' },
+      { title:'Why 80% quit the gym before 3 months: the psychology of sport habits', source:'Sports News', sourceUrl:'https://sportsnews.com', engagement:'5.6K shares', sent:'Negative', sentClass:'sent-down' },
     ],
   },
   'sostenibilidad': {
-    label: 'Sostenibilidad',
-    audience: 'profesionales de sostenibilidad, emprendedores green y consumidores conscientes',
-    tone: 'constructivo, basado en datos, evitando greenwashing y siendo honesto',
-    categories: ['Clima','Economia Circular','Energia','Empresas','Politica'],
+    label: 'Sustainability',
+    audience: 'sustainability professionals, green entrepreneurs and conscious consumers',
+    tone: 'constructive, data-driven, avoiding greenwashing and honest about trade-offs',
+    categories: ['Climate','Circular Economy','Energy','Business','Policy'],
     topics: [
-      { title:'Solar supera al carbon en capacidad instalada mundial por primera vez', source:'Green News', engagement:'234K menciones', sent:'Positivo', sentClass:'sent-up' },
-      { title:'El 68% de las afirmaciones eco corporativas son falsas o enganiosas: informe EU', source:'LinkedIn', engagement:'45K impressions', sent:'Negativo', sentClass:'sent-down' },
-      { title:'Economia circular en Espana: empresas que ganan dinero real con ello', source:'Reddit', engagement:'3.4K upvotes', sent:'Positivo', sentClass:'sent-up' },
-      { title:'Baterias de sodio vs litio: tecnologia que cambia el coste de la transicion energetica', source:'Green News', engagement:'7.8K shares', sent:'Positivo', sentClass:'sent-up' },
-      { title:'COP31 sin acuerdo vinculante: que significa para los compromisos empresariales', source:'X / Twitter', engagement:'89K menciones', sent:'Negativo', sentClass:'sent-down' },
+      { title:'Solar surpasses coal in global installed capacity for the first time', source:'Green News', sourceUrl:'https://greennews.com', engagement:'234K mentions', sent:'Positive', sentClass:'sent-up' },
+      { title:'68% of corporate eco claims are false or misleading: EU report', source:'LinkedIn', sourceUrl:'https://linkedin.com', engagement:'45K impressions', sent:'Negative', sentClass:'sent-down' },
+      { title:'Circular economy in practice: companies genuinely making money from it', source:'Reddit', sourceUrl:'https://reddit.com/r/sustainability', engagement:'3.4K upvotes', sent:'Positive', sentClass:'sent-up' },
+      { title:'Sodium vs lithium batteries: technology that changes energy transition costs', source:'Green News', sourceUrl:'https://greennews.com', engagement:'7.8K shares', sent:'Positive', sentClass:'sent-up' },
+      { title:'COP31 ends without binding agreement: what it means for corporate commitments', source:'X / Twitter', sourceUrl:'https://twitter.com/search?q=COP31', engagement:'89K mentions', sent:'Negative', sentClass:'sent-down' },
     ],
   },
 };
 
-// === ESTADO ===
-let selectedIds    = new Set();
-let generatedPosts = [];
-let generatedNL    = null;
-let wpConfig       = {};
-let currentTopics  = [];
+// ═══ STATE ═══
+var selectedIds    = new Set();
+var generatedPosts = [];
+var generatedNL    = null;
+var wpConfig       = {};
+var currentTopics  = [];
 
-try { const s = sessionStorage.getItem('pd_wp'); if (s) wpConfig = JSON.parse(s); } catch(e) {}
+try { var s = sessionStorage.getItem('pd_wp'); if (s) wpConfig = JSON.parse(s); } catch(e) {}
 fetch('/auth/me').then(function(r){ return r.json(); }).then(function(d){
   if (d.authenticated) document.getElementById('sidebarUser').textContent = d.user;
 });
 
-// === NICHO ===
+// ═══ NICHE ═══
 function getCurrentNiche() {
   var sel = document.getElementById('nicheSelect');
   if (!sel) return NICHES['email-marketing'];
   var val = sel.value;
   if (val === 'custom') {
     var customEl = document.getElementById('nicheCustom');
-    var label = (customEl ? customEl.value : '').trim() || 'Personalizado';
-    return { label: label, audience: 'personas interesadas en ' + label, tone: 'informativo con datos practicos', categories: ['Tendencias','Analisis','Consejos','Noticias'], topics: [] };
+    var label = (customEl ? customEl.value : '').trim() || 'Custom';
+    return { label: label, audience: 'people interested in ' + label, tone: 'informative with practical data', categories: ['Trends','Analysis','Tips','News'], topics: [] };
   }
   return NICHES[val] || NICHES['email-marketing'];
 }
@@ -171,6 +199,10 @@ function onNicheChange() {
   var val = sel ? sel.value : '';
   var c = document.getElementById('nicheCustom');
   if (c) c.style.display = val === 'custom' ? 'block' : 'none';
+  resetResults();
+}
+
+function resetResults() {
   if (currentTopics.length > 0) {
     selectedIds.clear(); currentTopics = [];
     document.getElementById('topicsWrap').style.display = 'none';
@@ -179,7 +211,7 @@ function onNicheChange() {
   }
 }
 
-// === SCAN ===
+// ═══ SCAN ═══
 function scanTopics() {
   var btn = document.getElementById('scanBtn');
   var niche = getCurrentNiche();
@@ -206,7 +238,8 @@ function scanFromCatalog(niche) {
 }
 
 function scanWithAI(niche) {
-  var prompt = 'Genera 7 trending topics realistas sobre "' + niche.label + '". Titulares con datos especificos. Fuentes: X/Twitter, Reddit, LinkedIn o medios especializados. Responde SOLO con JSON sin backticks: {"topics":[{"title":"...","source":"...","engagement":"...","sent":"Positivo","sentClass":"sent-up"}]}. Mezcla sent-up/sent-down/sent-mix.';
+  var lang = getCurrentLang();
+  var prompt = 'Generate 7 realistic trending topics about "' + niche.label + '". Specific headlines with data. Sources: X/Twitter, Reddit, LinkedIn or specialized media. Reply ONLY with JSON no backticks: {"topics":[{"title":"...","source":"...","sourceUrl":"https://...","engagement":"...","sent":"Positive","sentClass":"sent-up"}]}. Mix sent-up/sent-down/sent-mix. Write topics ' + lang.promptLang + '.';
   return callAI([{ role: 'user', content: prompt }], null, 800)
     .then(function(text) {
       var data = JSON.parse(text.replace(/```json|```/g, '').trim());
@@ -219,9 +252,9 @@ function scanWithAI(niche) {
       console.error('AI topics failed:', e);
       currentTopics = niche.topics.length > 0
         ? niche.topics.map(function(t, i){ return Object.assign({}, t, { id: i+1, badge: sourceToBadge(t.source) }); })
-        : [{ id:1, title:'Tendencias en ' + niche.label, source:'LinkedIn', badge:'badge-linkedin', engagement:'12K impressions', sent:'Positivo', sentClass:'sent-up' }];
+        : [{ id:1, title:'Trends in ' + niche.label, source:'LinkedIn', sourceUrl:'https://linkedin.com', badge:'badge-linkedin', engagement:'12K impressions', sent:'Positive', sentClass:'sent-up' }];
       showTopics(niche);
-      showToast('Topics del catalogo (IA no disponible)', false);
+      showToast('Topics from catalog (AI unavailable)', false);
     });
 }
 
@@ -233,7 +266,8 @@ function showTopics(niche) {
   document.getElementById('topicsWrap').scrollIntoView({ behavior: 'smooth', block: 'start' });
 }
 
-// === TOPICS RENDER ===
+// ═══ TOPICS RENDER ═══
+// sourceUrl shown in portal only — not passed to WP or email export
 function renderTopics() {
   var grid = document.getElementById('topicsGrid');
   grid.innerHTML = '';
@@ -241,8 +275,16 @@ function renderTopics() {
     var el = document.createElement('div');
     el.className = 'topic-card' + (selectedIds.has(t.id) ? ' selected' : '');
     el.style.animationDelay = (i * 0.04) + 's';
-    el.innerHTML = '<div class="topic-row1"><span class="source-badge ' + t.badge + '">' + t.source + '</span><span class="topic-engagement">' + t.engagement + '</span><div class="topic-check">&#10003;</div></div><div class="topic-title">' + t.title + '</div><div class="topic-meta"><span class="' + t.sentClass + '">' + t.sent + '</span></div>';
-    el.onclick = function(){ toggleTopic(t.id, el); };
+    var sourceLink = t.sourceUrl
+      ? '<a href="' + t.sourceUrl + '" target="_blank" class="topic-source-link">' + t.source + ' &nearr;</a>'
+      : '<span>' + t.source + '</span>';
+    el.innerHTML = '<div class="topic-row1"><span class="source-badge ' + t.badge + '">' + t.source + '</span><span class="topic-engagement">' + t.engagement + '</span><div class="topic-check">&#10003;</div></div>'
+      + '<div class="topic-title">' + t.title + '</div>'
+      + '<div class="topic-footer"><span class="' + t.sentClass + '">' + t.sent + '</span>' + (t.sourceUrl ? '<a href="' + t.sourceUrl + '" target="_blank" class="topic-verify-link">Verificar &nearr;</a>' : '') + '</div>';
+    el.onclick = function(e) {
+      if (e.target.tagName === 'A') return; // don't select when clicking verify link
+      toggleTopic(t.id, el);
+    };
     grid.appendChild(el);
   });
 }
@@ -264,30 +306,31 @@ function clearSelection() {
   updateActionBar();
 }
 
-// === GENERATE ===
+// ═══ GENERATE ═══
 function generateAll() {
   if (selectedIds.size === 0) return;
   var btn = document.getElementById('generateBtn');
   setLoading(btn, true);
   var niche    = getCurrentNiche();
+  var lang     = getCurrentLang();
   var selected = currentTopics.filter(function(t){ return selectedIds.has(t.id); });
   var topicsList = selected.map(function(t){ return '- "' + t.title + '" [' + t.source + ', ' + t.engagement + ']'; }).join('\n');
   var cats = niche.categories.join(', ');
-  var prompt = 'Eres un content strategist experto en ' + niche.label + '. Audiencia: ' + niche.audience + '. Hoy es ' + todayFormatted() + '.\n\nTopics de ' + niche.label + ':\n' + topicsList + '\n\nTono: ' + niche.tone + '. Categorias del blog: ' + cats + '.\n\nResponde SOLO con JSON sin backticks:\n{"subject_line":"Subject max 50 chars sin emojis","preheader":"Preheader max 90 chars","intro_blurb":"Apertura 1-2 lineas tono agil","posts":[{"wp_title":"Titulo SEO max 65 chars","wp_excerpt":"Extracto 2-3 frases","wp_content":"4-5 frases: contexto + datos + impacto + recomendacion","wp_category":"una de: ' + cats + '","snip_title":"Titular max 60 chars","snip_body":"2-3 frases: dato > impacto > accion","source":"fuente"}]}';
+  var prompt = 'You are a content strategist expert in ' + niche.label + '. Audience: ' + niche.audience + '. Today is ' + todayFormatted() + '.\n\nWith these trending topics, generate blog and newsletter content:\n\n' + topicsList + '\n\nTone: ' + niche.tone + '. Blog categories: ' + cats + '.\nWrite ALL content ' + lang.promptLang + '.\n\nReply ONLY with valid JSON no backticks:\n{"subject_line":"Email subject max 50 chars no emojis","preheader":"Preheader max 90 chars","intro_blurb":"Newsletter opening 1-2 lines agile tone","posts":[{"wp_title":"SEO title max 65 chars","wp_excerpt":"Excerpt 2-3 sentences","wp_content":"4-5 sentences: context + data + impact + actionable recommendation","wp_category":"one of: ' + cats + '","snip_title":"Newsletter headline max 60 chars","snip_body":"2-3 sentences: data point > impact > action","source":"source name"}]}';
   callAI([{ role: 'user', content: prompt }], null, 2000)
     .then(function(text) {
       var data = JSON.parse(text.replace(/```json|```/g, '').trim());
-      generatedNL    = Object.assign({}, data, { _niche: niche });
+      generatedNL    = Object.assign({}, data, { _niche: niche, _lang: lang });
       generatedPosts = (data.posts || []).map(function(p, i){ return Object.assign({}, p, { _idx: i, _status: 'pending' }); });
       renderOutput(data, niche);
     })
     .catch(function(err) {
       console.error(err);
       var fallback = buildFallback(selected, niche);
-      generatedNL    = Object.assign({}, fallback, { _niche: niche });
+      generatedNL    = Object.assign({}, fallback, { _niche: niche, _lang: lang });
       generatedPosts = fallback.posts.map(function(p, i){ return Object.assign({}, p, { _idx: i, _status: 'pending' }); });
       renderOutput(fallback, niche);
-      showToast('IA no disponible - contenido de ejemplo', true);
+      showToast('AI unavailable - example content used', true);
     })
     .finally(function() {
       setLoading(btn, false);
@@ -298,22 +341,22 @@ function generateAll() {
 
 function buildFallback(selected, niche) {
   return {
-    subject_line: 'Lo que mueve ' + niche.label + ' hoy',
-    preheader:    'Tendencias y datos - PEDRI',
-    intro_blurb:  niche.label + ' se mueve. Aqui las seniales que importan esta semana.',
+    subject_line: 'What is moving ' + niche.label + ' today',
+    preheader:    'Trends and data - PEDRI',
+    intro_blurb:  niche.label + ' is moving. Here are this week signals that matter.',
     posts: selected.map(function(t, i) { return {
       wp_title:    t.title.slice(0, 65),
-      wp_excerpt:  'Tendencia clave en ' + niche.label + ' que redefine el panorama.',
-      wp_content:  t.title + '. Contexto relevante para ' + niche.audience + '. Analiza y actua.',
+      wp_excerpt:  'A key trend in ' + niche.label + ' redefining the landscape.',
+      wp_content:  t.title + '. Relevant context for ' + niche.audience + '. Analyze and act.',
       wp_category: niche.categories[i % niche.categories.length],
       snip_title:  t.title.slice(0, 60),
-      snip_body:   'Senal importante en ' + niche.label + '. Analisis e impacto para esta semana.',
+      snip_body:   'Important signal in ' + niche.label + '. Analysis and impact for this week.',
       source: t.source,
     }; }),
   };
 }
 
-// === RENDER ===
+// ═══ RENDER ═══
 function renderOutput(data, niche) {
   renderBlogPosts();
   renderNewsletter(data, niche);
@@ -327,7 +370,7 @@ function renderBlogPosts() {
     var el = document.createElement('div');
     el.className = 'post-item'; el.id = 'pi-' + i;
     el.style.animationDelay = (i * 0.05) + 's';
-    el.innerHTML = '<div class="post-num">0' + (i+1) + '</div><div><div class="post-cat">' + p.wp_category + '</div><div class="post-title-out">' + p.wp_title + '</div><div class="post-excerpt-out">' + p.wp_excerpt + '</div></div><div class="post-status s-pending" id="ps-' + i + '"><span class="s-dot"></span>Pendiente</div>';
+    el.innerHTML = '<div class="post-num">0' + (i+1) + '</div><div><div class="post-cat">' + p.wp_category + '</div><div class="post-title-out">' + p.wp_title + '</div><div class="post-excerpt-out">' + p.wp_excerpt + '</div></div><div class="post-status s-pending" id="ps-' + i + '"><span class="s-dot"></span>Pending</div>';
     list.appendChild(el);
   });
 }
@@ -337,66 +380,90 @@ function setPostStatus(i, cls, label) {
   if (el) { el.className = 'post-status ' + cls; el.innerHTML = '<span class="s-dot"></span>' + label; }
 }
 
+// Preview in app stays full (with header/footer) so you can see visual context.
+// The HTML export (buildExportHTML) is snippets-only for pasting after your header.
 function renderNewsletter(data, niche) {
   var subject = data.subject_line || '';
-  document.getElementById('emailSubjectPill').textContent = 'Asunto: ' + subject;
+  document.getElementById('emailSubjectPill').textContent = 'Subject: ' + subject;
   document.getElementById('nlSubject').textContent = subject;
   var nicheLabel = niche ? niche.label : '';
   var snips = (data.posts || []).map(function(p) {
-    return '<div class="em-snip"><div class="em-snip-src">' + p.source + '</div><div class="em-snip-h">' + p.snip_title + '</div><div class="em-snip-p">' + p.snip_body + '</div><a href="#" class="em-snip-cta">Leer mas</a></div>';
+    return '<div class="em-snip"><div class="em-snip-src">' + p.source + '</div><div class="em-snip-h">' + p.snip_title + '</div><div class="em-snip-p">' + p.snip_body + '</div><a href="#" class="em-snip-cta">Read more</a></div>';
   }).join('');
-  document.getElementById('emailPreview').innerHTML = '<div class="em-outer"><div class="em-topbar"></div><div class="em-header"><div class="em-logo">PEDRI</div><div class="em-tagline">' + nicheLabel + '</div><div class="em-dateline">' + todayFormatted() + '</div></div><div class="em-introbelt"><p>' + data.intro_blurb + '</p></div><div class="em-subject">' + subject + '</div><div class="em-preheader">' + data.preheader + '</div><div class="em-divider"></div><div class="em-snippets">' + snips + '</div><div class="em-footer"><div class="em-footer-logo">PEDRI</div><p>Recibes esto porque te suscribiste a PEDRI<br><a href="#">Cancelar suscripcion</a> &middot; <a href="#">Ver en navegador</a></p></div></div>';
+  // Full preview with header + footer (visual reference only, not exported)
+  document.getElementById('emailPreview').innerHTML =
+    '<div class="em-outer">'
+    + '<div class="em-topbar"></div>'
+    + '<div class="em-header"><div class="em-logo">PEDRI</div><div class="em-tagline">' + nicheLabel + '</div><div class="em-dateline">' + todayFormatted() + '</div></div>'
+    + '<div class="em-introbelt"><p>' + data.intro_blurb + '</p></div>'
+    + '<div class="em-subject">' + subject + '</div>'
+    + '<div class="em-preheader">' + data.preheader + '</div>'
+    + '<div class="em-divider"></div>'
+    + '<div class="em-snippets em-snippets--export">' + snips + '</div>'
+    + '<div class="em-export-marker">&#8593; Solo esto se exporta al copiar HTML &#8593;</div>'
+    + '<div class="em-footer"><div class="em-footer-logo">PEDRI</div><p>Footer de tu ESP aqui</p></div>'
+    + '</div>';
 }
 
-// === WORDPRESS ===
+// ═══ WORDPRESS ═══
 function publishAll() {
-  if (!wpConfig.wp_url) { showToast('Primero configura WordPress', true); openWPModal(); return; }
+  if (!wpConfig.wp_url) { showToast('Configure WordPress first', true); openWPModal(); return; }
   var btn = document.getElementById('publishBtn');
   setLoading(btn, true);
-  generatedPosts.forEach(function(_, i){ setPostStatus(i, 's-pending', 'Publicando...'); });
+  generatedPosts.forEach(function(_, i){ setPostStatus(i, 's-pending', 'Publishing...'); });
   publishToWP(
     generatedPosts.map(function(p){ return { title: p.wp_title, content: '<p>' + p.wp_content + '</p>', excerpt: p.wp_excerpt }; }),
     { wp_url: wpConfig.wp_url, wp_user: wpConfig.wp_user, wp_password: wpConfig.wp_password }
   ).then(function(res) {
     res.results.forEach(function(r, i) {
-      if (r.ok) setPostStatus(i, 's-published', 'Publicado #' + r.id);
+      if (r.ok) setPostStatus(i, 's-published', 'Published #' + r.id);
       else      setPostStatus(i, 's-error', 'Error: ' + r.error);
     });
     var ok  = res.results.filter(function(r){ return r.ok; }).length;
     var err = res.results.filter(function(r){ return !r.ok; }).length;
-    showToast(err ? ok + ' publicados, ' + err + ' errores' : ok + ' posts publicados', err > 0);
+    showToast(err ? ok + ' published, ' + err + ' errors' : ok + ' posts published', err > 0);
   }).catch(function(e) {
     generatedPosts.forEach(function(_, i){ setPostStatus(i, 's-error', 'Error'); });
     showToast('Error: ' + e.message, true);
   }).finally(function(){ setLoading(btn, false); });
 }
 
-// === EXPORT HTML ===
+// ═══ EXPORT HTML ═══
+// Exports ONLY the snippets block — paste it after your branded header
+// and before your footer in your ESP template.
 function buildExportHTML() {
   if (!generatedNL) return '';
   var data  = generatedNL;
-  var niche = data._niche || { label: '' };
-  var today = todayFormatted();
   var snips = (data.posts || []).map(function(p) {
-    return '<tr><td style="padding:18px 32px;border-bottom:1px solid #e8e4dc;"><p style="font-family:Arial,sans-serif;font-size:9px;letter-spacing:2px;text-transform:uppercase;color:#888;margin:0 0 5px">' + p.source + '</p><h2 style="font-family:Arial,sans-serif;font-weight:900;font-size:16px;color:#1a1916;margin:0 0 8px">' + p.snip_title + '</h2><p style="font-family:Georgia,serif;font-size:13px;color:#444;line-height:1.7;margin:0 0 10px">' + p.snip_body + '</p><a href="#" style="font-family:Arial,sans-serif;font-size:11px;font-weight:700;color:#a8840b;text-transform:uppercase;text-decoration:none">Leer mas</a></td></tr>';
+    // source is NOT included in the exported HTML (portal-only)
+    return '<tr><td style="padding:18px 32px;border-bottom:1px solid #e8e4dc;">'
+      + '<h2 style="font-family:Arial,sans-serif;font-weight:900;font-size:16px;color:#1a1916;line-height:1.3;margin:0 0 8px">' + p.snip_title + '</h2>'
+      + '<p style="font-family:Georgia,serif;font-size:13px;color:#444;line-height:1.7;margin:0 0 10px">' + p.snip_body + '</p>'
+      + '<a href="#" style="font-family:Arial,sans-serif;font-size:11px;font-weight:700;color:#a8840b;letter-spacing:1px;text-transform:uppercase;text-decoration:none">Read more &rarr;</a>'
+      + '</td></tr>';
   }).join('');
-  return '<!DOCTYPE html><html lang="es"><head><meta charset="UTF-8"><title>' + data.subject_line + '</title></head><body style="margin:0;padding:0;background:#e8e4dc;"><table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="background:#e8e4dc;"><tr><td align="center" style="padding:24px 0;"><table role="presentation" width="600" cellpadding="0" cellspacing="0" border="0" style="background:#f7f4ef;max-width:600px;"><tr><td style="background:#1a1916;height:4px;font-size:0;">&nbsp;</td></tr><tr><td style="background:#1a1916;padding:28px 32px;text-align:center;"><p style="font-family:Arial,sans-serif;font-weight:900;font-size:18px;color:#c49a0e;letter-spacing:4px;text-transform:uppercase;margin:0">PEDRI</p><p style="font-size:11px;color:#888;font-style:italic;margin:4px 0 0">' + niche.label + '</p><p style="font-size:10px;color:#777;letter-spacing:2px;text-transform:uppercase;margin:8px 0 0">' + today + '</p></td></tr><tr><td style="background:#c49a0e;padding:14px 32px;text-align:center;"><p style="font-family:Georgia,serif;font-size:13px;color:#1a1a0a;font-style:italic;line-height:1.6;margin:0">' + data.intro_blurb + '</p></td></tr><tr><td style="font-family:Arial,sans-serif;font-weight:900;font-size:18px;color:#1a1916;text-align:center;padding:22px 32px 6px">' + data.subject_line + '</td></tr><tr><td style="font-family:Georgia,serif;font-size:12px;color:#888;text-align:center;padding:0 32px 18px;font-style:italic">' + data.preheader + '</td></tr><table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0">' + snips + '</table><tr><td style="background:#1a1916;padding:22px 32px;text-align:center;"><p style="font-family:Arial,sans-serif;font-weight:900;font-size:13px;color:#c49a0e;letter-spacing:4px;text-transform:uppercase;margin:0 0 8px">PEDRI</p><p style="font-size:11px;color:#555;line-height:1.8;margin:0">Recibes esto porque te suscribiste a PEDRI</p></td></tr></table></td></tr></table></body></html>';
+  // Clean table-based snippets block only — no header, no footer, no branding
+  return '<!-- PEDRI Newsletter Snippets - paste after your header, before your footer -->'
+    + '\n<table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="background:#f7f4ef;">'
+    + '\n' + snips
+    + '\n</table>'
+    + '\n<!-- /PEDRI Newsletter Snippets -->';
 }
 
 function doCopyHTML() {
   var html = buildExportHTML();
-  if (!html) { showToast('Primero genera la newsletter', true); return; }
-  copyToClipboard(html).then(function(){ showToast('HTML copiado para tu ESP'); });
+  if (!html) { showToast('Generate newsletter first', true); return; }
+  copyToClipboard(html).then(function(){ showToast('Snippets HTML copied - paste after your header'); });
 }
 
 function openSrcModal() {
   var html = buildExportHTML();
-  if (!html) { showToast('Primero genera la newsletter', true); return; }
+  if (!html) { showToast('Generate newsletter first', true); return; }
   document.getElementById('codeBlock').textContent = html;
   document.getElementById('srcModal').classList.add('open');
 }
 
-// === WP MODAL ===
+// ═══ WP MODAL ═══
 function openWPModal() {
   document.getElementById('wpUrl').value     = wpConfig.wp_url     || '';
   document.getElementById('wpUser').value    = wpConfig.wp_user    || '';
@@ -412,7 +479,7 @@ function testWP() {
   var cfg = { wp_url: document.getElementById('wpUrl').value.trim().replace(/\/$/,''), wp_user: document.getElementById('wpUser').value.trim(), wp_password: document.getElementById('wpAppPass').value.trim() };
   testWPConnection(cfg).then(function(data) {
     result.className = 'wp-test-result ' + (data.ok ? 'ok' : 'err');
-    result.textContent = data.ok ? 'Conectado como "' + data.wp_user + '"' : 'Error: ' + data.error;
+    result.textContent = data.ok ? 'Connected as "' + data.wp_user + '"' : 'Error: ' + data.error;
   }).catch(function(e) {
     result.className = 'wp-test-result err';
     result.textContent = 'Error: ' + e.message;
@@ -424,10 +491,10 @@ function saveWP() {
   try { sessionStorage.setItem('pd_wp', JSON.stringify(wpConfig)); } catch(e) {}
   closeModal('wpModal');
   if (wpConfig.wp_url) document.getElementById('wpDomain').textContent = wpConfig.wp_url;
-  showToast('WordPress configurado');
+  showToast('WordPress configured');
 }
 
-// === UTILS ===
+// ═══ UTILS ═══
 function sourceToBadge(s) {
   s = (s || '').toLowerCase();
   if (s.includes('twitter') || s === 'x') return 'badge-x';

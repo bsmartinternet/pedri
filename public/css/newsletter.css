@@ -121,3 +121,13 @@
 .btn-save-wp{width:100%;background:#1a1916;color:#fff;border:none;padding:13px;font-family:'Syne',sans-serif;font-size:12px;font-weight:700;letter-spacing:1px;text-transform:uppercase;cursor:pointer;transition:background .2s}
 .btn-save-wp:hover{background:#333}
 .code-block{background:#1a1916;padding:18px;font-family:monospace;font-size:11px;line-height:1.7;color:#b8d4a0;overflow-x:auto;white-space:pre;max-height:420px;overflow-y:auto}
+/* v5 additions */
+.lang-select-wrap{margin-left:auto}
+.lang-select{appearance:none;-webkit-appearance:none;background:#2a2925;border:1px solid rgba(255,255,255,0.15);color:#c49a0e;padding:9px 14px;font-family:'Syne',sans-serif;font-size:13px;font-weight:800;letter-spacing:2px;cursor:pointer;outline:none;transition:all .2s;min-width:56px;text-align:center}
+.lang-select:hover,.lang-select:focus{border-color:#c49a0e}
+.lang-select option{background:#1a1916;color:#fff}
+.topic-footer{display:flex;align-items:center;justify-content:space-between;margin-top:8px}
+.topic-verify-link{font-family:'Syne',sans-serif;font-size:10px;letter-spacing:1px;text-transform:uppercase;color:#a8840b;text-decoration:none;padding:3px 8px;border:1px solid rgba(196,154,14,0.3);transition:all .15s;flex-shrink:0}
+.topic-verify-link:hover{background:rgba(196,154,14,0.08);border-color:#c49a0e;color:#c49a0e}
+.em-export-marker{text-align:center;font-family:'Syne',sans-serif;font-size:9px;letter-spacing:2px;text-transform:uppercase;color:#cec7bd;padding:10px;background:#f0ece4;border-top:1px dashed #cec7bd;border-bottom:1px dashed #cec7bd}
+.em-snippets--export{border:2px dashed rgba(196,154,14,0.3)}
