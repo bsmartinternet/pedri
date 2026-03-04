@@ -13,7 +13,7 @@
 <!-- SIDEBAR -->
 <aside class="sidebar">
   <div class="sidebar-logo">
-    <a href="/" style="text-decoration:none;color:inherit"><span class="logo-text">PEDRI</span></a>
+    <a href="/" style="text-decoration:none;color:inherit"><span class="logo-text">Pulse<em>Desk</em></span></a>
   </div>
   <nav class="sidebar-nav">
     <div class="nav-section-label">Herramientas</div>
@@ -46,13 +46,33 @@
     </div>
   </div>
 
-  <!-- SOURCES -->
+  <!-- NICHE + SOURCES -->
+  <div class="niche-bar">
+    <span class="niche-label">Temática:</span>
+    <div class="niche-select-wrap">
+      <select id="nicheSelect" class="niche-select" onchange="onNicheChange()">
+        <option value="email-marketing">Email Marketing</option>
+        <option value="ia-tecnologia">IA &amp; Tecnología</option>
+        <option value="ecommerce">eCommerce &amp; Retail</option>
+        <option value="marketing-digital">Marketing Digital</option>
+        <option value="startups">Startups &amp; Negocios</option>
+        <option value="finanzas">Finanzas &amp; Economía</option>
+        <option value="salud-bienestar">Salud &amp; Bienestar</option>
+        <option value="viajes">Viajes &amp; Turismo</option>
+        <option value="moda-lifestyle">Moda &amp; Lifestyle</option>
+        <option value="deporte">Deporte &amp; Fitness</option>
+        <option value="sostenibilidad">Sostenibilidad</option>
+        <option value="custom">Personalizado...</option>
+      </select>
+    </div>
+    <input type="text" id="nicheCustom" class="niche-custom" placeholder="Escribe tu temática..." style="display:none" />
+  </div>
   <div class="sources-bar">
-    <span class="sources-label">Fuentes activas:</span>
+    <span class="sources-label">Fuentes:</span>
     <div class="source-chip active" data-src="x">X / Twitter</div>
     <div class="source-chip active" data-src="reddit">Reddit</div>
     <div class="source-chip active" data-src="linkedin">LinkedIn</div>
-    <div class="source-chip active" data-src="news">Marketing News</div>
+    <div class="source-chip active" data-src="news">Noticias</div>
   </div>
 
   <!-- TOPICS GRID -->
