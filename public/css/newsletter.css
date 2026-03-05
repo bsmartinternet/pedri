@@ -129,5 +129,5 @@
 .topic-footer{display:flex;align-items:center;justify-content:space-between;margin-top:8px}
 .topic-verify-link{font-family:'Syne',sans-serif;font-size:10px;letter-spacing:1px;text-transform:uppercase;color:#a8840b;text-decoration:none;padding:3px 8px;border:1px solid rgba(196,154,14,0.3);transition:all .15s;flex-shrink:0}
 .topic-verify-link:hover{background:rgba(196,154,14,0.08);border-color:#c49a0e;color:#c49a0e}
-.em-export-marker{text-align:center;font-family:'Syne',sans-serif;font-size:9px;letter-spacing:2px;text-transform:uppercase;color:#cec7bd;padding:10px;background:#f0ece4;border-top:1px dashed #cec7bd;border-bottom:1px dashed #cec7bd}
-.em-snippets--export{border:2px dashed rgba(196,154,14,0.3)}
+
+.em-outer--snippets{max-width:640px;margin:0 auto;background:#f7f4ef;}

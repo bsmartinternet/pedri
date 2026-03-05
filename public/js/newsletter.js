@@ -1,16 +1,14 @@
-/* newsletter.js - PEDRI v5 */
+/* newsletter.js - PEDRI v5.1 */
 'use strict';
 
-// ═══ LANGUAGES ═══
-// Each language defines UI labels + prompt instruction for Claude
 var LANGUAGES = {
-  'es': { label: 'ES - Espanol',    locale: 'es-ES', promptLang: 'en castellano', flag: 'ES' },
-  'en': { label: 'EN - English',    locale: 'en-GB', promptLang: 'in English',    flag: 'EN' },
-  'it': { label: 'IT - Italiano',   locale: 'it-IT', promptLang: 'in italiano',   flag: 'IT' },
-  'fr': { label: 'FR - Francais',   locale: 'fr-FR', promptLang: 'en francais',   flag: 'FR' },
-  'de': { label: 'DE - Deutsch',    locale: 'de-DE', promptLang: 'auf Deutsch',   flag: 'DE' },
-  'nl': { label: 'NL - Nederlands', locale: 'nl-NL', promptLang: 'in het Nederlands', flag: 'NL' },
-  'be': { label: 'BE - Belgique',   locale: 'fr-BE', promptLang: 'en francais (belgique)', flag: 'BE' },
+  'es': { label: 'ES', promptLang: 'en castellano' },
+  'en': { label: 'EN', promptLang: 'in English' },
+  'it': { label: 'IT', promptLang: 'in italiano' },
+  'fr': { label: 'FR', promptLang: 'en francais' },
+  'de': { label: 'DE', promptLang: 'auf Deutsch' },
+  'nl': { label: 'NL', promptLang: 'in het Nederlands' },
+  'be': { label: 'BE', promptLang: 'en francais (Belgique)' },
 };
 
 function getCurrentLang() {
@@ -19,16 +17,12 @@ function getCurrentLang() {
 }
 
 function onLangChange() {
-  // reset if topics already loaded
-  if (currentTopics.length > 0) {
-    selectedIds.clear(); currentTopics = [];
-    document.getElementById('topicsWrap').style.display = 'none';
-    document.getElementById('outputWrap').style.display = 'none';
-    document.getElementById('actionBar').classList.remove('visible');
-  }
+  if (currentTopics.length > 0) resetResults();
 }
 
-// ═══ NICHES ═══
+// Topics in catalog have NO sourceUrl — they are example placeholders.
+// Real sourceUrls only come from AI scan (custom niche), where Claude
+// is prompted to return the actual URL of each specific post/thread.
 var NICHES = {
   'email-marketing': {
     label: 'Email Marketing',
@@ -36,13 +30,13 @@ var NICHES = {
     tone: 'expert, data-driven, actionable',
     categories: ['Strategy','Deliverability','AI & Email','Trends','Tools'],
     topics: [
-      { title:'AI cuts email marketing costs 60% per new industry study', source:'X / Twitter', sourceUrl:'https://twitter.com/search?q=email+marketing+AI', engagement:'24.2K mentions', sent:'Positive', sentClass:'sent-up' },
-      { title:'B2B open rates fall to 19%: analysis of what is failing in 2026', source:'Reddit', sourceUrl:'https://reddit.com/r/emailmarketing', engagement:'1.8K upvotes', sent:'Negative', sentClass:'sent-down' },
-      { title:'LLM personalization: real cases showing +45% nurturing conversion', source:'LinkedIn', sourceUrl:'https://linkedin.com', engagement:'8.9K impressions', sent:'Positive', sentClass:'sent-up' },
-      { title:'Google announces new DMARC rules affecting all ESPs in Q2', source:'X / Twitter', sourceUrl:'https://twitter.com/search?q=DMARC+2026', engagement:'18.5K mentions', sent:'Negative', sentClass:'sent-down' },
-      { title:'AI subject line A/B testing: +34% CTR in documented real campaign', source:'Marketing News', sourceUrl:'https://marketingnews.com', engagement:'220 shares', sent:'Positive', sentClass:'sent-up' },
-      { title:'Plain-text email revival: why luxury brands are ditching HTML', source:'Reddit', sourceUrl:'https://reddit.com/r/emailmarketing', engagement:'2.4K upvotes', sent:'Mixed', sentClass:'sent-mix' },
-      { title:'Cold lead nurturing automation: flows that convert in B2B 2026', source:'LinkedIn', sourceUrl:'https://linkedin.com', engagement:'12K impressions', sent:'Positive', sentClass:'sent-up' },
+      { title:'AI cuts email marketing costs 60% per new industry study', source:'X / Twitter', engagement:'24.2K mentions', sent:'Positive', sentClass:'sent-up' },
+      { title:'B2B open rates fall to 19%: analysis of what is failing in 2026', source:'Reddit', engagement:'1.8K upvotes', sent:'Negative', sentClass:'sent-down' },
+      { title:'LLM personalization: real cases showing +45% nurturing conversion', source:'LinkedIn', engagement:'8.9K impressions', sent:'Positive', sentClass:'sent-up' },
+      { title:'Google announces new DMARC rules affecting all ESPs in Q2', source:'X / Twitter', engagement:'18.5K mentions', sent:'Negative', sentClass:'sent-down' },
+      { title:'AI subject line A/B testing: +34% CTR in documented real campaign', source:'Marketing News', engagement:'220 shares', sent:'Positive', sentClass:'sent-up' },
+      { title:'Plain-text email revival: why luxury brands are ditching HTML', source:'Reddit', engagement:'2.4K upvotes', sent:'Mixed', sentClass:'sent-mix' },
+      { title:'Cold lead nurturing automation: flows that convert in B2B 2026', source:'LinkedIn', engagement:'12K impressions', sent:'Positive', sentClass:'sent-up' },
     ],
   },
   'ia-tecnologia': {
@@ -51,13 +45,13 @@ var NICHES = {
     tone: 'technical but accessible, with practical cases and critical analysis',
     categories: ['Generative AI','Tools','Industry','Research','Productivity'],
     topics: [
-      { title:'GPT-5 outperforms humans in complex reasoning per new benchmarks', source:'X / Twitter', sourceUrl:'https://twitter.com/search?q=GPT5', engagement:'142K mentions', sent:'Positive', sentClass:'sent-up' },
-      { title:'Anthropic publishes interpretability research on large models', source:'Hacker News', sourceUrl:'https://news.ycombinator.com', engagement:'3.2K upvotes', sent:'Positive', sentClass:'sent-up' },
-      { title:'Why AI agents keep failing in production: technical analysis', source:'Reddit', sourceUrl:'https://reddit.com/r/MachineLearning', engagement:'5.8K upvotes', sent:'Mixed', sentClass:'sent-mix' },
-      { title:'EU approves high-risk AI regulations: what changes for your company', source:'Tech News', sourceUrl:'https://techcrunch.com', engagement:'890 shares', sent:'Negative', sentClass:'sent-down' },
-      { title:'Cursor vs GitHub Copilot 2026: real comparison after 6 months of use', source:'Reddit', sourceUrl:'https://reddit.com/r/programming', engagement:'7.1K upvotes', sent:'Mixed', sentClass:'sent-mix' },
-      { title:'Reasoning models cut automation costs 40% in mid-market companies', source:'LinkedIn', sourceUrl:'https://linkedin.com', engagement:'15K impressions', sent:'Positive', sentClass:'sent-up' },
-      { title:'Apple Intelligence disappoints: why it is late and what it means', source:'X / Twitter', sourceUrl:'https://twitter.com/search?q=apple+intelligence', engagement:'89K mentions', sent:'Negative', sentClass:'sent-down' },
+      { title:'GPT-5 outperforms humans in complex reasoning per new benchmarks', source:'X / Twitter', engagement:'142K mentions', sent:'Positive', sentClass:'sent-up' },
+      { title:'Anthropic publishes interpretability research on large models', source:'Hacker News', engagement:'3.2K upvotes', sent:'Positive', sentClass:'sent-up' },
+      { title:'Why AI agents keep failing in production: technical analysis', source:'Reddit', engagement:'5.8K upvotes', sent:'Mixed', sentClass:'sent-mix' },
+      { title:'EU approves high-risk AI regulations: what changes for your company', source:'Tech News', engagement:'890 shares', sent:'Negative', sentClass:'sent-down' },
+      { title:'Cursor vs GitHub Copilot 2026: real comparison after 6 months of use', source:'Reddit', engagement:'7.1K upvotes', sent:'Mixed', sentClass:'sent-mix' },
+      { title:'Reasoning models cut automation costs 40% in mid-market companies', source:'LinkedIn', engagement:'15K impressions', sent:'Positive', sentClass:'sent-up' },
+      { title:'Apple Intelligence disappoints: why it is late and what it means', source:'X / Twitter', engagement:'89K mentions', sent:'Negative', sentClass:'sent-down' },
     ],
   },
   'ecommerce': {
@@ -66,12 +60,12 @@ var NICHES = {
     tone: 'practical, conversion-focused, business results oriented',
     categories: ['Conversion','Logistics','AI & Retail','Trends','Platforms'],
     topics: [
-      { title:'Amazon launches generative AI for product pages: +23% conversion in beta', source:'Ecommerce News', sourceUrl:'https://ecommercenews.eu', engagement:'4.5K shares', sent:'Positive', sentClass:'sent-up' },
-      { title:'TikTok Shop overtakes Instagram Shopping in direct sales in Europe', source:'X / Twitter', sourceUrl:'https://twitter.com/search?q=tiktok+shop+europe', engagement:'67K mentions', sent:'Positive', sentClass:'sent-up' },
-      { title:'Cart abandonment rises to 78%: new recovery strategies that work', source:'Reddit', sourceUrl:'https://reddit.com/r/ecommerce', engagement:'2.1K upvotes', sent:'Negative', sentClass:'sent-down' },
-      { title:'Shopify vs WooCommerce 2026: which platform wins on total cost of ownership', source:'Reddit', sourceUrl:'https://reddit.com/r/ecommerce', engagement:'3.8K upvotes', sent:'Mixed', sentClass:'sent-mix' },
-      { title:'Dynamic AI personalization: online store triples average LTV', source:'LinkedIn', sourceUrl:'https://linkedin.com', engagement:'22K impressions', sent:'Positive', sentClass:'sent-up' },
-      { title:'Last-mile logistics costs up 18% in Q1: how to protect margins', source:'Ecommerce News', sourceUrl:'https://ecommercenews.eu', engagement:'1.2K shares', sent:'Negative', sentClass:'sent-down' },
+      { title:'Amazon launches generative AI for product pages: +23% conversion in beta', source:'Ecommerce News', engagement:'4.5K shares', sent:'Positive', sentClass:'sent-up' },
+      { title:'TikTok Shop overtakes Instagram Shopping in direct sales in Europe', source:'X / Twitter', engagement:'67K mentions', sent:'Positive', sentClass:'sent-up' },
+      { title:'Cart abandonment rises to 78%: new recovery strategies that work', source:'Reddit', engagement:'2.1K upvotes', sent:'Negative', sentClass:'sent-down' },
+      { title:'Shopify vs WooCommerce 2026: which platform wins on total cost of ownership', source:'Reddit', engagement:'3.8K upvotes', sent:'Mixed', sentClass:'sent-mix' },
+      { title:'Dynamic AI personalization: online store triples average LTV', source:'LinkedIn', engagement:'22K impressions', sent:'Positive', sentClass:'sent-up' },
+      { title:'Last-mile logistics costs up 18% in Q1: how to protect margins', source:'Ecommerce News', engagement:'1.2K shares', sent:'Negative', sentClass:'sent-down' },
     ],
   },
   'marketing-digital': {
@@ -80,12 +74,12 @@ var NICHES = {
     tone: 'strategic, data-driven, with real campaign examples',
     categories: ['SEO','Paid Media','Content','Social','Analytics'],
     topics: [
-      { title:'Google core algorithm update: content sites down 30% on average', source:'X / Twitter', sourceUrl:'https://twitter.com/search?q=google+core+update', engagement:'95K mentions', sent:'Negative', sentClass:'sent-down' },
-      { title:'Meta Ads CPM up 22% in Q1 2026: strategies to maintain positive ROAS', source:'LinkedIn', sourceUrl:'https://linkedin.com', engagement:'18K impressions', sent:'Negative', sentClass:'sent-down' },
-      { title:'Long-form content ranking again: analysis of 10K articles post-update', source:'Reddit', sourceUrl:'https://reddit.com/r/SEO', engagement:'4.2K upvotes', sent:'Positive', sentClass:'sent-up' },
-      { title:'LinkedIn Thought Leadership Ads: CPL 40% lower than Search in B2B', source:'Marketing News', sourceUrl:'https://marketingnews.com', engagement:'780 shares', sent:'Positive', sentClass:'sent-up' },
-      { title:'Dark social is now 60% of referral traffic: how to measure it in 2026', source:'Reddit', sourceUrl:'https://reddit.com/r/marketing', engagement:'3.1K upvotes', sent:'Mixed', sentClass:'sent-mix' },
-      { title:'B2B influencer marketing: cases with documented ROI on LinkedIn', source:'LinkedIn', sourceUrl:'https://linkedin.com', engagement:'31K impressions', sent:'Positive', sentClass:'sent-up' },
+      { title:'Google core algorithm update: content sites down 30% on average', source:'X / Twitter', engagement:'95K mentions', sent:'Negative', sentClass:'sent-down' },
+      { title:'Meta Ads CPM up 22% in Q1 2026: strategies to maintain positive ROAS', source:'LinkedIn', engagement:'18K impressions', sent:'Negative', sentClass:'sent-down' },
+      { title:'Long-form content ranking again: analysis of 10K articles post-update', source:'Reddit', engagement:'4.2K upvotes', sent:'Positive', sentClass:'sent-up' },
+      { title:'LinkedIn Thought Leadership Ads: CPL 40% lower than Search in B2B', source:'Marketing News', engagement:'780 shares', sent:'Positive', sentClass:'sent-up' },
+      { title:'Dark social is now 60% of referral traffic: how to measure it in 2026', source:'Reddit', engagement:'3.1K upvotes', sent:'Mixed', sentClass:'sent-mix' },
+      { title:'B2B influencer marketing: cases with documented ROI on LinkedIn', source:'LinkedIn', engagement:'31K impressions', sent:'Positive', sentClass:'sent-up' },
     ],
   },
   'startups': {
@@ -94,12 +88,12 @@ var NICHES = {
     tone: 'direct, inspiring, with practical lessons and no corporate fluff',
     categories: ['Funding','Product','Growth','Culture','Market'],
     topics: [
-      { title:'Y Combinator S26: the trends they are funding right now', source:'X / Twitter', sourceUrl:'https://twitter.com/ycombinator', engagement:'78K mentions', sent:'Positive', sentClass:'sent-up' },
-      { title:'73% of 2021 startups will not raise again: post-mortem analysis', source:'TechCrunch', sourceUrl:'https://techcrunch.com', engagement:'5.6K shares', sent:'Negative', sentClass:'sent-down' },
-      { title:'0 to $1M ARR in 11 months without investment: the full bootstrapped SaaS playbook', source:'Reddit', sourceUrl:'https://reddit.com/r/SaaS', engagement:'9.2K upvotes', sent:'Positive', sentClass:'sent-up' },
-      { title:'VCs shrinking Series A checks: what it means for founders now', source:'LinkedIn', sourceUrl:'https://linkedin.com', engagement:'42K impressions', sent:'Negative', sentClass:'sent-down' },
-      { title:'Product-led growth in B2B: the metrics that matter per 50 founders', source:'Reddit', sourceUrl:'https://reddit.com/r/startups', engagement:'6.8K upvotes', sent:'Positive', sentClass:'sent-up' },
-      { title:'The AI solopreneur: how one person is building 7-figure businesses', source:'X / Twitter', sourceUrl:'https://twitter.com/search?q=solopreneur+AI', engagement:'112K mentions', sent:'Mixed', sentClass:'sent-mix' },
+      { title:'Y Combinator S26: the trends they are funding right now', source:'X / Twitter', engagement:'78K mentions', sent:'Positive', sentClass:'sent-up' },
+      { title:'73% of 2021 startups will not raise again: post-mortem analysis', source:'TechCrunch', engagement:'5.6K shares', sent:'Negative', sentClass:'sent-down' },
+      { title:'0 to $1M ARR in 11 months without investment: bootstrapped SaaS playbook', source:'Reddit', engagement:'9.2K upvotes', sent:'Positive', sentClass:'sent-up' },
+      { title:'VCs shrinking Series A checks: what it means for founders now', source:'LinkedIn', engagement:'42K impressions', sent:'Negative', sentClass:'sent-down' },
+      { title:'Product-led growth in B2B: the metrics that matter per 50 founders', source:'Reddit', engagement:'6.8K upvotes', sent:'Positive', sentClass:'sent-up' },
+      { title:'The AI solopreneur: how one person is building 7-figure businesses', source:'X / Twitter', engagement:'112K mentions', sent:'Mixed', sentClass:'sent-mix' },
     ],
   },
   'finanzas': {
@@ -108,11 +102,11 @@ var NICHES = {
     tone: 'analytical, rigorous, with macro context and actionable perspective',
     categories: ['Markets','Macro','Investment','Crypto','Fintech'],
     topics: [
-      { title:'Fed holds rates: what March inflation data is telling us', source:'Bloomberg', sourceUrl:'https://bloomberg.com', engagement:'23K shares', sent:'Mixed', sentClass:'sent-mix' },
-      { title:'Bitcoin breaks $120K: the bull and bear arguments right now', source:'X / Twitter', sourceUrl:'https://twitter.com/search?q=bitcoin', engagement:'340K mentions', sent:'Positive', sentClass:'sent-up' },
-      { title:'European banks cut dividends on credit risk: sector-by-sector analysis', source:'Financial News', sourceUrl:'https://ft.com', engagement:'3.4K shares', sent:'Negative', sentClass:'sent-down' },
-      { title:'AI ETFs outperform S&P 500 for second consecutive year', source:'Reddit', sourceUrl:'https://reddit.com/r/investing', engagement:'8.9K upvotes', sent:'Positive', sentClass:'sent-up' },
-      { title:'Digital yuan advances: China processes 18% of international payments with CBDC', source:'Bloomberg', sourceUrl:'https://bloomberg.com', engagement:'12K shares', sent:'Mixed', sentClass:'sent-mix' },
+      { title:'Fed holds rates: what March inflation data is telling us', source:'Bloomberg', engagement:'23K shares', sent:'Mixed', sentClass:'sent-mix' },
+      { title:'Bitcoin breaks $120K: the bull and bear arguments right now', source:'X / Twitter', engagement:'340K mentions', sent:'Positive', sentClass:'sent-up' },
+      { title:'European banks cut dividends on credit risk: sector analysis', source:'Financial News', engagement:'3.4K shares', sent:'Negative', sentClass:'sent-down' },
+      { title:'AI ETFs outperform S&P 500 for second consecutive year', source:'Reddit', engagement:'8.9K upvotes', sent:'Positive', sentClass:'sent-up' },
+      { title:'Digital yuan: China processes 18% of international payments with CBDC', source:'Bloomberg', engagement:'12K shares', sent:'Mixed', sentClass:'sent-mix' },
     ],
   },
   'salud': {
@@ -121,11 +115,11 @@ var NICHES = {
     tone: 'approachable, evidence-based, practical and non-alarmist',
     categories: ['Research','Nutrition','Mental Health','Health Tech','Lifestyle'],
     topics: [
-      { title:'Harvard: 7 hours of sleep reduces cardiovascular risk by 34%', source:'Health News', sourceUrl:'https://health.harvard.edu', engagement:'156K mentions', sent:'Positive', sentClass:'sent-up' },
-      { title:'AI detects stage-0 lung cancer with 94% accuracy: first clinical trial', source:'X / Twitter', sourceUrl:'https://twitter.com/search?q=AI+cancer+detection', engagement:'89K mentions', sent:'Positive', sentClass:'sent-up' },
-      { title:'58% of workers at high burnout risk: European 2026 study', source:'LinkedIn', sourceUrl:'https://linkedin.com', engagement:'34K impressions', sent:'Negative', sentClass:'sent-down' },
-      { title:'Ozempic and the muscle paradox: what doctors are not explaining well', source:'Reddit', sourceUrl:'https://reddit.com/r/health', engagement:'12.4K upvotes', sent:'Mixed', sentClass:'sent-mix' },
-      { title:'The 5 foods science confirms transform your gut microbiome', source:'Health News', sourceUrl:'https://health.harvard.edu', engagement:'4.2K shares', sent:'Positive', sentClass:'sent-up' },
+      { title:'Harvard: 7 hours sleep reduces cardiovascular risk by 34%', source:'Health News', engagement:'156K mentions', sent:'Positive', sentClass:'sent-up' },
+      { title:'AI detects stage-0 lung cancer with 94% accuracy: first clinical trial', source:'X / Twitter', engagement:'89K mentions', sent:'Positive', sentClass:'sent-up' },
+      { title:'58% of workers at high burnout risk: European 2026 study', source:'LinkedIn', engagement:'34K impressions', sent:'Negative', sentClass:'sent-down' },
+      { title:'Ozempic and the muscle paradox: what doctors are not explaining', source:'Reddit', engagement:'12.4K upvotes', sent:'Mixed', sentClass:'sent-mix' },
+      { title:'The 5 foods science confirms transform your gut microbiome', source:'Health News', engagement:'4.2K shares', sent:'Positive', sentClass:'sent-up' },
     ],
   },
   'viajes': {
@@ -134,11 +128,11 @@ var NICHES = {
     tone: 'inspiring, with practical tips and experienced traveler perspective',
     categories: ['Destinations','Trends','Travel Tech','Sustainability','Remote Work'],
     topics: [
-      { title:'Top 10 least crowded European destinations exploding in 2026', source:'Travel News', sourceUrl:'https://travelnews.com', engagement:'67K mentions', sent:'Positive', sentClass:'sent-up' },
-      { title:'Japan limits Mount Fuji access: the overtourism debate', source:'X / Twitter', sourceUrl:'https://twitter.com/search?q=japan+fuji+tourism', engagement:'234K mentions', sent:'Mixed', sentClass:'sent-mix' },
-      { title:'Digital nomads in Spain: cities offering real visas and benefits', source:'Reddit', sourceUrl:'https://reddit.com/r/digitalnomad', engagement:'18.6K upvotes', sent:'Positive', sentClass:'sent-up' },
-      { title:'Low-cost airlines raising prices 31%: strategies to keep traveling cheap', source:'Reddit', sourceUrl:'https://reddit.com/r/travel', engagement:'9.4K upvotes', sent:'Negative', sentClass:'sent-down' },
-      { title:'AI trip planning: honest comparison of Gemini vs ChatGPT vs Claude', source:'Travel News', sourceUrl:'https://travelnews.com', engagement:'3.1K shares', sent:'Mixed', sentClass:'sent-mix' },
+      { title:'Top 10 least crowded European destinations exploding in 2026', source:'Travel News', engagement:'67K mentions', sent:'Positive', sentClass:'sent-up' },
+      { title:'Japan limits Mount Fuji access: the overtourism debate', source:'X / Twitter', engagement:'234K mentions', sent:'Mixed', sentClass:'sent-mix' },
+      { title:'Digital nomads in Spain: cities offering real visas and benefits', source:'Reddit', engagement:'18.6K upvotes', sent:'Positive', sentClass:'sent-up' },
+      { title:'Low-cost airlines raising prices 31%: strategies to keep traveling cheap', source:'Reddit', engagement:'9.4K upvotes', sent:'Negative', sentClass:'sent-down' },
+      { title:'AI trip planning: honest comparison of Gemini vs ChatGPT vs Claude', source:'Travel News', engagement:'3.1K shares', sent:'Mixed', sentClass:'sent-mix' },
     ],
   },
   'deporte': {
@@ -147,29 +141,29 @@ var NICHES = {
     tone: 'motivating, science-based, practical and direct',
     categories: ['Training','Sports Nutrition','Technology','Competition','Recovery'],
     topics: [
-      { title:'US Olympic athletics team training protocol: leaked details', source:'Reddit', sourceUrl:'https://reddit.com/r/athletics', engagement:'34K upvotes', sent:'Positive', sentClass:'sent-up' },
-      { title:'Creatine in women: meta-analysis of 47 studies confirms same benefits as men', source:'Sports News', sourceUrl:'https://sportsnews.com', engagement:'12K shares', sent:'Positive', sentClass:'sent-up' },
-      { title:'Fasted cardio: what the science says vs fitness influencers', source:'X / Twitter', sourceUrl:'https://twitter.com/search?q=fasted+cardio+science', engagement:'56K mentions', sent:'Mixed', sentClass:'sent-mix' },
-      { title:'Whoop 5 vs Oura Ring 4: comparison after 3 months of parallel testing', source:'Reddit', sourceUrl:'https://reddit.com/r/running', engagement:'8.9K upvotes', sent:'Mixed', sentClass:'sent-mix' },
-      { title:'Why 80% quit the gym before 3 months: the psychology of sport habits', source:'Sports News', sourceUrl:'https://sportsnews.com', engagement:'5.6K shares', sent:'Negative', sentClass:'sent-down' },
+      { title:'US Olympic athletics team training protocol: leaked details', source:'Reddit', engagement:'34K upvotes', sent:'Positive', sentClass:'sent-up' },
+      { title:'Creatine in women: meta-analysis of 47 studies confirms same benefits', source:'Sports News', engagement:'12K shares', sent:'Positive', sentClass:'sent-up' },
+      { title:'Fasted cardio: what the science says vs fitness influencers', source:'X / Twitter', engagement:'56K mentions', sent:'Mixed', sentClass:'sent-mix' },
+      { title:'Whoop 5 vs Oura Ring 4: comparison after 3 months parallel testing', source:'Reddit', engagement:'8.9K upvotes', sent:'Mixed', sentClass:'sent-mix' },
+      { title:'Why 80% quit the gym before 3 months: the psychology of sport habits', source:'Sports News', engagement:'5.6K shares', sent:'Negative', sentClass:'sent-down' },
     ],
   },
   'sostenibilidad': {
     label: 'Sustainability',
     audience: 'sustainability professionals, green entrepreneurs and conscious consumers',
-    tone: 'constructive, data-driven, avoiding greenwashing and honest about trade-offs',
+    tone: 'constructive, data-driven, avoiding greenwashing, honest about trade-offs',
     categories: ['Climate','Circular Economy','Energy','Business','Policy'],
     topics: [
-      { title:'Solar surpasses coal in global installed capacity for the first time', source:'Green News', sourceUrl:'https://greennews.com', engagement:'234K mentions', sent:'Positive', sentClass:'sent-up' },
-      { title:'68% of corporate eco claims are false or misleading: EU report', source:'LinkedIn', sourceUrl:'https://linkedin.com', engagement:'45K impressions', sent:'Negative', sentClass:'sent-down' },
-      { title:'Circular economy in practice: companies genuinely making money from it', source:'Reddit', sourceUrl:'https://reddit.com/r/sustainability', engagement:'3.4K upvotes', sent:'Positive', sentClass:'sent-up' },
-      { title:'Sodium vs lithium batteries: technology that changes energy transition costs', source:'Green News', sourceUrl:'https://greennews.com', engagement:'7.8K shares', sent:'Positive', sentClass:'sent-up' },
-      { title:'COP31 ends without binding agreement: what it means for corporate commitments', source:'X / Twitter', sourceUrl:'https://twitter.com/search?q=COP31', engagement:'89K mentions', sent:'Negative', sentClass:'sent-down' },
+      { title:'Solar surpasses coal in global installed capacity for the first time', source:'Green News', engagement:'234K mentions', sent:'Positive', sentClass:'sent-up' },
+      { title:'68% of corporate eco claims are false or misleading: EU report', source:'LinkedIn', engagement:'45K impressions', sent:'Negative', sentClass:'sent-down' },
+      { title:'Circular economy in practice: companies genuinely making money from it', source:'Reddit', engagement:'3.4K upvotes', sent:'Positive', sentClass:'sent-up' },
+      { title:'Sodium vs lithium batteries: technology changing energy transition costs', source:'Green News', engagement:'7.8K shares', sent:'Positive', sentClass:'sent-up' },
+      { title:'COP31 ends without binding agreement: what it means for corporate targets', source:'X / Twitter', engagement:'89K mentions', sent:'Negative', sentClass:'sent-down' },
     ],
   },
 };
 
-// ═══ STATE ═══
+// === STATE ===
 var selectedIds    = new Set();
 var generatedPosts = [];
 var generatedNL    = null;
@@ -181,7 +175,7 @@ fetch('/auth/me').then(function(r){ return r.json(); }).then(function(d){
   if (d.authenticated) document.getElementById('sidebarUser').textContent = d.user;
 });
 
-// ═══ NICHE ═══
+// === NICHE ===
 function getCurrentNiche() {
   var sel = document.getElementById('nicheSelect');
   if (!sel) return NICHES['email-marketing'];
@@ -203,15 +197,13 @@ function onNicheChange() {
 }
 
 function resetResults() {
-  if (currentTopics.length > 0) {
-    selectedIds.clear(); currentTopics = [];
-    document.getElementById('topicsWrap').style.display = 'none';
-    document.getElementById('outputWrap').style.display = 'none';
-    document.getElementById('actionBar').classList.remove('visible');
-  }
+  selectedIds.clear(); currentTopics = [];
+  document.getElementById('topicsWrap').style.display = 'none';
+  document.getElementById('outputWrap').style.display = 'none';
+  document.getElementById('actionBar').classList.remove('visible');
 }
 
-// ═══ SCAN ═══
+// === SCAN ===
 function scanTopics() {
   var btn = document.getElementById('scanBtn');
   var niche = getCurrentNiche();
@@ -230,6 +222,7 @@ function delay(ms) { return new Promise(function(r){ setTimeout(r, ms); }); }
 
 function scanFromCatalog(niche) {
   return delay(700).then(function() {
+    // Catalog topics have no sourceUrl — Verificar button won't appear
     currentTopics = niche.topics.map(function(t, i) {
       return Object.assign({}, t, { id: i + 1, badge: sourceToBadge(t.source) });
     });
@@ -237,10 +230,12 @@ function scanFromCatalog(niche) {
   });
 }
 
+// When using AI scan (custom niche), Claude returns actual URLs for each specific
+// post or thread — these are real and can be verified directly.
 function scanWithAI(niche) {
   var lang = getCurrentLang();
-  var prompt = 'Generate 7 realistic trending topics about "' + niche.label + '". Specific headlines with data. Sources: X/Twitter, Reddit, LinkedIn or specialized media. Reply ONLY with JSON no backticks: {"topics":[{"title":"...","source":"...","sourceUrl":"https://...","engagement":"...","sent":"Positive","sentClass":"sent-up"}]}. Mix sent-up/sent-down/sent-mix. Write topics ' + lang.promptLang + '.';
-  return callAI([{ role: 'user', content: prompt }], null, 800)
+  var prompt = 'Search the web and find 7 real trending posts or threads about "' + niche.label + '" published in the last 48 hours. For each one return the exact URL of that specific post, thread or article (not the homepage). Reply ONLY with JSON no backticks: {"topics":[{"title":"exact headline","source":"platform name","sourceUrl":"https://exact-url-of-this-post.com/...","engagement":"e.g. 1.2K upvotes","sent":"Positive","sentClass":"sent-up"}]}. Mix sent-up/sent-down/sent-mix. Write titles ' + lang.promptLang + '. Only include items with real verifiable URLs.';
+  return callAI([{ role: 'user', content: prompt }], null, 1000)
     .then(function(text) {
       var data = JSON.parse(text.replace(/```json|```/g, '').trim());
       currentTopics = (data.topics || []).map(function(t, i) {
@@ -249,12 +244,13 @@ function scanWithAI(niche) {
       showTopics(niche);
     })
     .catch(function(e) {
-      console.error('AI topics failed:', e);
+      console.error('AI scan failed:', e);
+      // Fallback to catalog topics without URLs
       currentTopics = niche.topics.length > 0
         ? niche.topics.map(function(t, i){ return Object.assign({}, t, { id: i+1, badge: sourceToBadge(t.source) }); })
-        : [{ id:1, title:'Trends in ' + niche.label, source:'LinkedIn', sourceUrl:'https://linkedin.com', badge:'badge-linkedin', engagement:'12K impressions', sent:'Positive', sentClass:'sent-up' }];
+        : [{ id:1, title:'Trends in ' + niche.label, source:'LinkedIn', badge:'badge-linkedin', engagement:'12K impressions', sent:'Positive', sentClass:'sent-up' }];
       showTopics(niche);
-      showToast('Topics from catalog (AI unavailable)', false);
+      showToast('Using catalog topics (AI unavailable)', false);
     });
 }
 
@@ -266,8 +262,9 @@ function showTopics(niche) {
   document.getElementById('topicsWrap').scrollIntoView({ behavior: 'smooth', block: 'start' });
 }
 
-// ═══ TOPICS RENDER ═══
-// sourceUrl shown in portal only — not passed to WP or email export
+// === TOPICS RENDER ===
+// sourceUrl shown as Verify button in portal only.
+// NOT included in WP posts or newsletter HTML export.
 function renderTopics() {
   var grid = document.getElementById('topicsGrid');
   grid.innerHTML = '';
@@ -275,14 +272,22 @@ function renderTopics() {
     var el = document.createElement('div');
     el.className = 'topic-card' + (selectedIds.has(t.id) ? ' selected' : '');
     el.style.animationDelay = (i * 0.04) + 's';
-    var sourceLink = t.sourceUrl
-      ? '<a href="' + t.sourceUrl + '" target="_blank" class="topic-source-link">' + t.source + ' &nearr;</a>'
-      : '<span>' + t.source + '</span>';
-    el.innerHTML = '<div class="topic-row1"><span class="source-badge ' + t.badge + '">' + t.source + '</span><span class="topic-engagement">' + t.engagement + '</span><div class="topic-check">&#10003;</div></div>'
+    var verifyBtn = t.sourceUrl
+      ? '<a href="' + t.sourceUrl + '" target="_blank" rel="noopener" class="topic-verify-link">Verify &nearr;</a>'
+      : '';
+    el.innerHTML =
+      '<div class="topic-row1">'
+        + '<span class="source-badge ' + t.badge + '">' + t.source + '</span>'
+        + '<span class="topic-engagement">' + t.engagement + '</span>'
+        + '<div class="topic-check">&#10003;</div>'
+      + '</div>'
       + '<div class="topic-title">' + t.title + '</div>'
-      + '<div class="topic-footer"><span class="' + t.sentClass + '">' + t.sent + '</span>' + (t.sourceUrl ? '<a href="' + t.sourceUrl + '" target="_blank" class="topic-verify-link">Verificar &nearr;</a>' : '') + '</div>';
+      + '<div class="topic-footer">'
+        + '<span class="' + t.sentClass + '">' + t.sent + '</span>'
+        + verifyBtn
+      + '</div>';
     el.onclick = function(e) {
-      if (e.target.tagName === 'A') return; // don't select when clicking verify link
+      if (e.target.tagName === 'A') return;
       toggleTopic(t.id, el);
     };
     grid.appendChild(el);
@@ -306,7 +311,7 @@ function clearSelection() {
   updateActionBar();
 }
 
-// ═══ GENERATE ═══
+// === GENERATE ===
 function generateAll() {
   if (selectedIds.size === 0) return;
   var btn = document.getElementById('generateBtn');
@@ -343,20 +348,20 @@ function buildFallback(selected, niche) {
   return {
     subject_line: 'What is moving ' + niche.label + ' today',
     preheader:    'Trends and data - PEDRI',
-    intro_blurb:  niche.label + ' is moving. Here are this week signals that matter.',
+    intro_blurb:  niche.label + ' is moving. Key signals for this week.',
     posts: selected.map(function(t, i) { return {
       wp_title:    t.title.slice(0, 65),
       wp_excerpt:  'A key trend in ' + niche.label + ' redefining the landscape.',
       wp_content:  t.title + '. Relevant context for ' + niche.audience + '. Analyze and act.',
       wp_category: niche.categories[i % niche.categories.length],
       snip_title:  t.title.slice(0, 60),
-      snip_body:   'Important signal in ' + niche.label + '. Analysis and impact for this week.',
+      snip_body:   'Key signal in ' + niche.label + '. Impact and what to do this week.',
       source: t.source,
     }; }),
   };
 }
 
-// ═══ RENDER ═══
+// === RENDER ===
 function renderOutput(data, niche) {
   renderBlogPosts();
   renderNewsletter(data, niche);
@@ -380,32 +385,27 @@ function setPostStatus(i, cls, label) {
   if (el) { el.className = 'post-status ' + cls; el.innerHTML = '<span class="s-dot"></span>' + label; }
 }
 
-// Preview in app stays full (with header/footer) so you can see visual context.
-// The HTML export (buildExportHTML) is snippets-only for pasting after your header.
+// Preview = snippets only (no header/footer)
+// Same as export — what you see is exactly what you get when copying HTML.
 function renderNewsletter(data, niche) {
   var subject = data.subject_line || '';
   document.getElementById('emailSubjectPill').textContent = 'Subject: ' + subject;
   document.getElementById('nlSubject').textContent = subject;
-  var nicheLabel = niche ? niche.label : '';
   var snips = (data.posts || []).map(function(p) {
-    return '<div class="em-snip"><div class="em-snip-src">' + p.source + '</div><div class="em-snip-h">' + p.snip_title + '</div><div class="em-snip-p">' + p.snip_body + '</div><a href="#" class="em-snip-cta">Read more</a></div>';
+    return '<div class="em-snip">'
+      + '<div class="em-snip-h">' + p.snip_title + '</div>'
+      + '<div class="em-snip-p">' + p.snip_body + '</div>'
+      + '<a href="#" class="em-snip-cta">Read more &rarr;</a>'
+      + '</div>';
   }).join('');
-  // Full preview with header + footer (visual reference only, not exported)
+  // Clean preview — snippets only, no header/footer
   document.getElementById('emailPreview').innerHTML =
-    '<div class="em-outer">'
-    + '<div class="em-topbar"></div>'
-    + '<div class="em-header"><div class="em-logo">PEDRI</div><div class="em-tagline">' + nicheLabel + '</div><div class="em-dateline">' + todayFormatted() + '</div></div>'
-    + '<div class="em-introbelt"><p>' + data.intro_blurb + '</p></div>'
-    + '<div class="em-subject">' + subject + '</div>'
-    + '<div class="em-preheader">' + data.preheader + '</div>'
-    + '<div class="em-divider"></div>'
-    + '<div class="em-snippets em-snippets--export">' + snips + '</div>'
-    + '<div class="em-export-marker">&#8593; Solo esto se exporta al copiar HTML &#8593;</div>'
-    + '<div class="em-footer"><div class="em-footer-logo">PEDRI</div><p>Footer de tu ESP aqui</p></div>'
+    '<div class="em-outer em-outer--snippets">'
+    + '<div class="em-snippets">' + snips + '</div>'
     + '</div>';
 }
 
-// ═══ WORDPRESS ═══
+// === WORDPRESS ===
 function publishAll() {
   if (!wpConfig.wp_url) { showToast('Configure WordPress first', true); openWPModal(); return; }
   var btn = document.getElementById('publishBtn');
@@ -428,26 +428,23 @@ function publishAll() {
   }).finally(function(){ setLoading(btn, false); });
 }
 
-// ═══ EXPORT HTML ═══
-// Exports ONLY the snippets block — paste it after your branded header
-// and before your footer in your ESP template.
+// === EXPORT HTML ===
+// Snippets block only — no header, no footer, no branding.
+// Paste after your header and before your footer in your ESP.
 function buildExportHTML() {
   if (!generatedNL) return '';
-  var data  = generatedNL;
-  var snips = (data.posts || []).map(function(p) {
-    // source is NOT included in the exported HTML (portal-only)
+  var snips = (generatedNL.posts || []).map(function(p) {
     return '<tr><td style="padding:18px 32px;border-bottom:1px solid #e8e4dc;">'
       + '<h2 style="font-family:Arial,sans-serif;font-weight:900;font-size:16px;color:#1a1916;line-height:1.3;margin:0 0 8px">' + p.snip_title + '</h2>'
       + '<p style="font-family:Georgia,serif;font-size:13px;color:#444;line-height:1.7;margin:0 0 10px">' + p.snip_body + '</p>'
       + '<a href="#" style="font-family:Arial,sans-serif;font-size:11px;font-weight:700;color:#a8840b;letter-spacing:1px;text-transform:uppercase;text-decoration:none">Read more &rarr;</a>'
       + '</td></tr>';
   }).join('');
-  // Clean table-based snippets block only — no header, no footer, no branding
-  return '<!-- PEDRI Newsletter Snippets - paste after your header, before your footer -->'
-    + '\n<table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="background:#f7f4ef;">'
-    + '\n' + snips
-    + '\n</table>'
-    + '\n<!-- /PEDRI Newsletter Snippets -->';
+  return '<!-- PEDRI snippets — paste after your header, before your footer -->\n'
+    + '<table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="background:#f7f4ef;">\n'
+    + snips + '\n'
+    + '</table>\n'
+    + '<!-- /PEDRI snippets -->';
 }
 
 function doCopyHTML() {
@@ -463,7 +460,7 @@ function openSrcModal() {
   document.getElementById('srcModal').classList.add('open');
 }
 
-// ═══ WP MODAL ═══
+// === WP MODAL ===
 function openWPModal() {
   document.getElementById('wpUrl').value     = wpConfig.wp_url     || '';
   document.getElementById('wpUser').value    = wpConfig.wp_user    || '';
@@ -494,7 +491,7 @@ function saveWP() {
   showToast('WordPress configured');
 }
 
-// ═══ UTILS ═══
+// === UTILS ===
 function sourceToBadge(s) {
   s = (s || '').toLowerCase();
   if (s.includes('twitter') || s === 'x') return 'badge-x';
