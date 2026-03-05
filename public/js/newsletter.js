@@ -97,7 +97,8 @@ function scanWithWebSearch() {
     [{ role: 'user', content: userPrompt }],
     systemPrompt,
     1200,
-    true  // enable web_search tool
+    true,  // use web_search tool
+    true   // use fast model (haiku) — scan/classify task
   ).then(function(text) {
     var clean = text.replace(/```json|```/g, '').trim();
     // Extract JSON if there's surrounding text
@@ -183,7 +184,7 @@ function generateAll() {
   var topicsList = selected.map(function(t){ return '- "' + t.title + '" [' + t.source + ', ' + t.engagement + ']'; }).join('\n');
   var cats = niche.categories.join(', ');
   var prompt = 'You are a content strategist expert in ' + niche.label + '. Audience: ' + niche.audience + '. Today is ' + todayFormatted() + '.\n\nWith these real trending topics from today, generate blog posts and newsletter snippets:\n\n' + topicsList + '\n\nTone: ' + niche.tone + '. Blog categories to use: ' + cats + '.\nWrite ALL content ' + lang.promptLang + '.\n\nReturn ONLY valid JSON, no backticks:\n{"subject_line":"Email subject max 50 chars no emojis","preheader":"Preheader max 90 chars","intro_blurb":"Newsletter opening 1-2 lines agile tone","posts":[{"wp_title":"SEO title max 65 chars","wp_excerpt":"Excerpt 2-3 sentences","wp_content":"4-5 sentences: context + data + impact + actionable recommendation","wp_category":"one of: ' + cats + '","snip_title":"Newsletter headline max 60 chars","snip_body":"2-3 sentences: data point > impact > action","source":"source name"}]}';
-  callAI([{ role: 'user', content: prompt }], null, 2000, false)
+  callAI([{ role: 'user', content: prompt }], null, 2000, false, false) // sonnet — content generation
     .then(function(text) {
       var clean = text.replace(/```json|```/g, '').trim();
       var jsonMatch = clean.match(/\{[\s\S]*\}/);
