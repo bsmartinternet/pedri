@@ -64,7 +64,7 @@ router.post('/wordpress/publish', async (req, res) => {
     return res.status(400).json({ error: 'posts debe ser un array con al menos un elemento' });
   }
 
-  const baseUrl = (wp_url || process.env.WP_URL || '').replace(//$/, '');
+  const baseUrl = (wp_url || process.env.WP_URL || '').replace(/\/$/, '');
   const user    = wp_user     || process.env.WP_USER;
   const pass    = wp_password || process.env.WP_APP_PASSWORD;
 
@@ -104,7 +104,7 @@ router.post('/wordpress/publish', async (req, res) => {
 // POST /api/wordpress/test
 router.post('/wordpress/test', async (req, res) => {
   const { wp_url, wp_user, wp_password } = req.body;
-  const baseUrl = (wp_url || process.env.WP_URL || '').replace(//$/, '');
+  const baseUrl = (wp_url || process.env.WP_URL || '').replace(/\/$/, '');
   const user    = wp_user     || process.env.WP_USER;
   const pass    = wp_password || process.env.WP_APP_PASSWORD;
 
