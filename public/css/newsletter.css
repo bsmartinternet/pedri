@@ -131,3 +131,6 @@
 .topic-verify-link:hover{background:rgba(196,154,14,0.08);border-color:#c49a0e;color:#c49a0e}
 
 .em-outer--snippets{max-width:640px;margin:0 auto;background:#f7f4ef;}
+.topic-source-text{font-family:'Syne',sans-serif;font-size:10px;letter-spacing:1px;color:#9b958e}
+.topic-source-link{font-family:'Syne',sans-serif;font-size:10px;letter-spacing:1px;text-transform:uppercase;color:#a8840b;text-decoration:none;padding:3px 8px;border:1px solid rgba(196,154,14,0.3);transition:all .15s}
+.topic-source-link:hover{background:rgba(196,154,14,0.08);border-color:#c49a0e;color:#c49a0e}

@@ -1,15 +1,14 @@
-/* app.js — utilidades globales de Pedri */
+/* app.js - PEDRI v6 */
 'use strict';
 
-// ─── Logout ───
-async function logout() {
-  await fetch('/auth/logout', { method: 'POST' });
-  window.location.href = '/login';
+function logout() {
+  fetch('/auth/logout', { method: 'POST' }).then(function(){ window.location.href = '/login'; });
 }
 
-// ─── Toast ───
-function showToast(msg, isError = false, duration = 3500) {
-  let t = document.getElementById('_toast');
+function showToast(msg, isError, duration) {
+  if (isError === undefined) isError = false;
+  if (duration === undefined) duration = 3500;
+  var t = document.getElementById('_toast');
   if (!t) {
     t = document.createElement('div');
     t.id = '_toast';
@@ -19,74 +18,67 @@ function showToast(msg, isError = false, duration = 3500) {
   t.textContent = msg;
   t.className = 'toast show' + (isError ? ' error' : '');
   clearTimeout(t._timer);
-  t._timer = setTimeout(() => { t.className = 'toast'; }, duration);
+  t._timer = setTimeout(function(){ t.className = 'toast'; }, duration);
 }
 
-// ─── API helper (proxy interno) ───
-async function callAI(messages, system = null, max_tokens = 1500) {
-  const body = { messages, max_tokens };
+// callAI - proxy to Anthropic via server
+// useWebSearch=true activates the web_search_20250305 tool on the server side
+function callAI(messages, system, max_tokens, useWebSearch) {
+  if (max_tokens === undefined) max_tokens = 1500;
+  if (useWebSearch === undefined) useWebSearch = false;
+  var body = { messages: messages, max_tokens: max_tokens };
   if (system) body.system = system;
+  if (useWebSearch) body.use_web_search = true;
 
-  const res = await fetch('/api/ai/complete', {
+  return fetch('/api/ai/complete', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify(body),
+  }).then(function(res) {
+    if (res.status === 401) { window.location.href = '/login'; throw new Error('Session expired'); }
+    return res.json().then(function(data) {
+      if (!res.ok) throw new Error(data.error || 'AI error');
+      return data.text;
+    });
   });
-
-  if (res.status === 401) {
-    window.location.href = '/login';
-    throw new Error('Sesión expirada');
-  }
-
-  const data = await res.json();
-  if (!res.ok) throw new Error(data.error || 'Error de AI');
-  return data.text;
 }
 
-// ─── WordPress helper ───
-async function publishToWP(posts, wpConfig = {}) {
-  const res = await fetch('/api/wordpress/publish', {
+function publishToWP(posts, wpConfig) {
+  if (!wpConfig) wpConfig = {};
+  var body = Object.assign({ posts: posts }, wpConfig);
+  return fetch('/api/wordpress/publish', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ posts, ...wpConfig }),
+    body: JSON.stringify(body),
+  }).then(function(res) {
+    if (res.status === 401) { window.location.href = '/login'; throw new Error('Session expired'); }
+    return res.json();
   });
-
-  if (res.status === 401) {
-    window.location.href = '/login';
-    throw new Error('Sesión expirada');
-  }
-
-  return res.json();
 }
 
-async function testWPConnection(wpConfig) {
-  const res = await fetch('/api/wordpress/test', {
+function testWPConnection(wpConfig) {
+  return fetch('/api/wordpress/test', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify(wpConfig),
-  });
-  return res.json();
+  }).then(function(res){ return res.json(); });
 }
 
-// ─── Copy to clipboard ───
-async function copyToClipboard(text) {
-  try {
-    await navigator.clipboard.writeText(text);
-    return true;
-  } catch {
-    const ta = document.createElement('textarea');
-    ta.value = text;
-    ta.style.position = 'fixed';
-    ta.style.opacity = '0';
-    document.body.appendChild(ta);
-    ta.select();
-    document.execCommand('copy');
-    document.body.removeChild(ta);
-    return true;
+function copyToClipboard(text) {
+  if (navigator.clipboard && navigator.clipboard.writeText) {
+    return navigator.clipboard.writeText(text).then(function(){ return true; });
   }
+  var ta = document.createElement('textarea');
+  ta.value = text;
+  ta.style.position = 'fixed';
+  ta.style.opacity = '0';
+  document.body.appendChild(ta);
+  ta.select();
+  document.execCommand('copy');
+  document.body.removeChild(ta);
+  return Promise.resolve(true);
 }
 
-// ─── Formato de fecha ───
 function todayFormatted() {
   return new Date().toLocaleDateString('es-ES', {
     weekday: 'long', day: 'numeric', month: 'long', year: 'numeric'
