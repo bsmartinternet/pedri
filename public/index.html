@@ -1,158 +1,104 @@
 <!DOCTYPE html>
-<html lang="es">
+<html lang="en">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Pedri</title>
-<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;700;800&family=Literata:ital,wght@0,300;1,300&display=swap" rel="stylesheet">
+<title>PEDRI — Dashboard</title>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;700;900&family=DM+Mono:wght@300;400;500&family=DM+Sans:wght@300;400;500;700&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="/css/app.css">
 </head>
 <body>
 
-<!-- SIDEBAR -->
-<aside class="sidebar" id="sidebar">
+<aside class="sidebar">
   <div class="sidebar-logo">
     <span class="logo-text">PEDRI</span>
+    <span class="logo-sub">Content Intelligence</span>
   </div>
-
   <nav class="sidebar-nav">
-    <div class="nav-section-label">Herramientas</div>
-
-    <a class="nav-item active" href="/" data-tool="dashboard">
-      <span class="nav-icon">⊞</span>
-      <span>Dashboard</span>
-    </a>
-
-    <a class="nav-item" href="/tools/newsletter.html" data-tool="newsletter">
-      <span class="nav-icon">✦</span>
-      <span>Newsletter IA</span>
-      <span class="nav-badge">Activo</span>
-    </a>
-
-    <!-- Añadir nuevas herramientas aquí -->
-    <div class="nav-item nav-item--soon">
-      <span class="nav-icon">◈</span>
-      <span>Ofertas &amp; Deals</span>
-      <span class="nav-badge nav-badge--soon">Próximo</span>
-    </div>
-
-    <div class="nav-item nav-item--soon">
-      <span class="nav-icon">◇</span>
-      <span>Social Posts</span>
-      <span class="nav-badge nav-badge--soon">Próximo</span>
-    </div>
+    <span class="nav-section-label">Tools</span>
+    <a class="nav-item active" href="/"><span class="nav-icon">⊞</span><span>Dashboard</span></a>
+    <a class="nav-item" href="/tools/newsletter.html"><span class="nav-icon">✦</span><span>Newsletter AI</span><span class="nav-badge">Active</span></a>
+    <div class="nav-item nav-item--soon"><span class="nav-icon">◈</span><span>Offers &amp; Deals</span><span class="nav-badge nav-badge--soon">Soon</span></div>
+    <div class="nav-item nav-item--soon"><span class="nav-icon">◇</span><span>Social Posts</span><span class="nav-badge nav-badge--soon">Soon</span></div>
   </nav>
-
   <div class="sidebar-footer">
-    <div class="sidebar-user">
-      <div class="user-dot"></div>
-      <span id="sidebarUser">—</span>
-    </div>
-    <button class="btn-logout" onclick="logout()">Salir</button>
+    <div class="sidebar-user"><div class="user-dot"></div><span id="sidebarUser">—</span></div>
+    <button class="btn-logout" onclick="logout()">Exit</button>
   </div>
 </aside>
 
-<!-- MAIN -->
 <main class="main-content">
   <div class="page-header">
     <div>
-      <div class="page-eyebrow">Dashboard</div>
-      <h1 class="page-title">Bienvenido a Pedri</h1>
+      <div class="page-eyebrow">Overview</div>
+      <h1 class="page-title">Dashboard</h1>
     </div>
     <div class="header-date" id="headerDate"></div>
   </div>
 
-  <!-- TOOL CARDS -->
   <div class="tools-grid">
-
-    <a href="/tools/newsletter.html" class="tool-card tool-card--active">
+    <a class="tool-card tool-card--active" href="/tools/newsletter.html">
       <div class="tool-card-icon">✦</div>
       <div class="tool-card-body">
-        <div class="tool-card-title">Newsletter IA</div>
-        <div class="tool-card-desc">
-          Escanea trending topics, genera posts para WordPress y el HTML de tu newsletter estilo The Hustle. Publicación directa vía REST API.
-        </div>
+        <div class="tool-card-title">Newsletter AI</div>
+        <div class="tool-card-desc">Scan trending topics, generate blog posts and newsletter snippets ready for your ESP.</div>
       </div>
       <div class="tool-card-arrow">→</div>
     </a>
-
     <div class="tool-card tool-card--soon">
       <div class="tool-card-icon">◈</div>
       <div class="tool-card-body">
-        <div class="tool-card-title">Ofertas &amp; Deals</div>
-        <div class="tool-card-desc">
-          Gestiona ofertas y promociones para la web y campañas de email. Integración con WooCommerce.
-        </div>
+        <div class="tool-card-title">Offers &amp; Deals</div>
+        <div class="tool-card-desc">Generate promotional content and deal campaigns across your portals.</div>
       </div>
-      <div class="tool-card-soon-tag">Próximamente</div>
+      <div class="tool-card-soon-tag">Coming soon</div>
     </div>
-
     <div class="tool-card tool-card--soon">
       <div class="tool-card-icon">◇</div>
       <div class="tool-card-body">
         <div class="tool-card-title">Social Posts</div>
-        <div class="tool-card-desc">
-          Convierte las entradas del blog en posts optimizados para LinkedIn, X y otras plataformas.
-        </div>
+        <div class="tool-card-desc">Repurpose content into platform-specific social media posts.</div>
       </div>
-      <div class="tool-card-soon-tag">Próximamente</div>
+      <div class="tool-card-soon-tag">Coming soon</div>
     </div>
-
   </div>
 
-  <!-- STATUS PANEL -->
   <div class="status-panel">
-    <div class="status-panel-title">Estado del sistema</div>
+    <div class="status-panel-title">System Status</div>
     <div class="status-row">
       <span class="status-label">Anthropic API</span>
-      <span class="status-indicator" id="statusAI">
-        <span class="status-dot"></span> Comprobando...
-      </span>
+      <span class="status-indicator status-ok" id="statusAI"><span class="status-dot"></span>Checking...</span>
     </div>
     <div class="status-row">
-      <span class="status-label">WordPress</span>
-      <span class="status-indicator" id="statusWP">
-        <span class="status-dot"></span> No configurado
-      </span>
+      <span class="status-label">Brave Search</span>
+      <span class="status-indicator" id="statusBrave"><span class="status-dot"></span>—</span>
     </div>
     <div class="status-row">
-      <span class="status-label">Sesión</span>
-      <span class="status-indicator status-ok">
-        <span class="status-dot"></span> Activa
-      </span>
+      <span class="status-label">Session</span>
+      <span class="status-indicator status-ok"><span class="status-dot"></span>Active</span>
     </div>
   </div>
-
 </main>
 
 <script src="/js/app.js"></script>
 <script>
-  document.getElementById('headerDate').textContent =
-    new Date().toLocaleDateString('es-ES', { weekday:'long', day:'numeric', month:'long', year:'numeric' });
+document.getElementById('headerDate').textContent = todayFormatted();
 
-  // Comprueba sesión y muestra usuario
-  fetch('/auth/me').then(r => r.json()).then(data => {
-    if (data.authenticated) {
-      document.getElementById('sidebarUser').textContent = data.user;
-    }
-  });
+fetch('/auth/me').then(r => r.json()).then(d => {
+  if (d.authenticated) document.getElementById('sidebarUser').textContent = d.user;
+});
 
-  // Ping rápido a Anthropic (a través del backend)
-  fetch('/api/ai/complete', {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ messages: [{ role: 'user', content: 'ping' }], max_tokens: 5 })
-  }).then(r => {
-    const el = document.getElementById('statusAI');
-    if (r.ok) {
-      el.className = 'status-indicator status-ok';
-      el.innerHTML = '<span class="status-dot"></span> Conectado';
-    } else {
-      el.className = 'status-indicator status-err';
-      el.innerHTML = '<span class="status-dot"></span> Error de API key';
-    }
-  }).catch(() => {
-    document.getElementById('statusAI').innerHTML = '<span class="status-dot"></span> Sin conexión';
+// Quick AI ping
+callAI([{ role: 'user', content: 'hi' }], null, 5, false, false)
+  .then(function() {
+    document.getElementById('statusAI').className = 'status-indicator status-ok';
+    document.getElementById('statusAI').innerHTML = '<span class="status-dot"></span>Online';
+    document.getElementById('statusBrave').className = 'status-indicator status-ok';
+    document.getElementById('statusBrave').innerHTML = '<span class="status-dot"></span>Configured';
+  })
+  .catch(function() {
+    document.getElementById('statusAI').className = 'status-indicator status-err';
+    document.getElementById('statusAI').innerHTML = '<span class="status-dot"></span>Error';
   });
 </script>
 </body>

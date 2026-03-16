@@ -1,10 +1,10 @@
 <!DOCTYPE html>
-<html lang="es">
+<html lang="en">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Newsletter IA — Pedri</title>
-<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;700;800&family=Literata:ital,wght@0,300;1,300&display=swap" rel="stylesheet">
+<title>Newsletter AI — PEDRI</title>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;700;900&family=DM+Mono:wght@300;400;500&family=DM+Sans:wght@300;400;500;700&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="/css/app.css">
 <link rel="stylesheet" href="/css/newsletter.css">
 </head>
@@ -13,18 +13,19 @@
 <!-- SIDEBAR -->
 <aside class="sidebar">
   <div class="sidebar-logo">
-    <a href="/" style="text-decoration:none;color:inherit"><span class="logo-text">PEDRI</span></a>
+    <span class="logo-text">PEDRI</span>
+    <span class="logo-sub">Content Intelligence</span>
   </div>
   <nav class="sidebar-nav">
-    <div class="nav-section-label">Herramientas</div>
-    <a class="nav-item" href="/" data-tool="dashboard"><span class="nav-icon">⊞</span><span>Dashboard</span></a>
-    <a class="nav-item active" href="/tools/newsletter.html"><span class="nav-icon">✦</span><span>Newsletter IA</span><span class="nav-badge">Activo</span></a>
-    <div class="nav-item nav-item--soon"><span class="nav-icon">◈</span><span>Ofertas &amp; Deals</span><span class="nav-badge nav-badge--soon">Próximo</span></div>
-    <div class="nav-item nav-item--soon"><span class="nav-icon">◇</span><span>Social Posts</span><span class="nav-badge nav-badge--soon">Próximo</span></div>
+    <span class="nav-section-label">Tools</span>
+    <a class="nav-item" href="/"><span class="nav-icon">⊞</span><span>Dashboard</span></a>
+    <a class="nav-item active" href="/tools/newsletter.html"><span class="nav-icon">✦</span><span>Newsletter AI</span><span class="nav-badge">Active</span></a>
+    <div class="nav-item nav-item--soon"><span class="nav-icon">◈</span><span>Offers &amp; Deals</span><span class="nav-badge nav-badge--soon">Soon</span></div>
+    <div class="nav-item nav-item--soon"><span class="nav-icon">◇</span><span>Social Posts</span><span class="nav-badge nav-badge--soon">Soon</span></div>
   </nav>
   <div class="sidebar-footer">
     <div class="sidebar-user"><div class="user-dot"></div><span id="sidebarUser">—</span></div>
-    <button class="btn-logout" onclick="logout()">Salir</button>
+    <button class="btn-logout" onclick="logout()">Exit</button>
   </div>
 </aside>
 
@@ -33,64 +34,61 @@
 
   <!-- COMMAND BAR -->
   <div class="command-bar">
-    <div>
-      <div class="page-eyebrow">Newsletter IA</div>
-      <h1 class="page-title" style="font-size:22px;margin-bottom:0">Trending → Blog → Newsletter</h1>
+    <div class="command-bar-left">
+      <div class="page-eyebrow">Newsletter AI</div>
+      <h1 class="page-title">Trending → Blog → Newsletter</h1>
     </div>
-    <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap;">
+    <div class="command-bar-right">
       <button class="btn-wp-config" onclick="openWPModal()">⚙ WordPress</button>
       <button class="btn-scan" id="scanBtn" onclick="scanTopics()">
         <span class="btn-spinner"></span>
-        <span class="btn-text">⟳ Escanear tendencias</span>
+        <span class="btn-text">⟳ Scan trends</span>
       </button>
     </div>
   </div>
 
-  <!-- NICHE + SOURCES -->
+  <!-- NICHE + LANG BAR -->
   <div class="niche-bar">
-    <span class="niche-label">Temática:</span>
-    <div class="niche-select-wrap">
-      <select id="nicheSelect" class="niche-select" onchange="onNicheChange()">
-        <option value="email-marketing">Email Marketing</option>
-        <option value="ia-tecnologia">AI &amp; Technology</option>
-        <option value="ecommerce">eCommerce &amp; Retail</option>
-        <option value="marketing-digital">Digital Marketing</option>
-        <option value="startups">Startups &amp; Business</option>
-        <option value="finanzas">Finance &amp; Economy</option>
-        <option value="salud">Health &amp; Wellness</option>
-        <option value="viajes">Travel &amp; Tourism</option>
-        <option value="deporte">Sport &amp; Fitness</option>
-        <option value="sostenibilidad">Sustainability</option>
-        <option value="custom">Custom...</option>
-        
-      </select>
-    </div>
-    <input type="text" id="nicheCustom" class="niche-custom" placeholder="Your topic..." style="display:none" />
-    <div class="lang-select-wrap">
-      <select id="langSelect" class="lang-select" onchange="onLangChange()">
-        <option value="es">ES</option>
-        <option value="en">EN</option>
-        <option value="it">IT</option>
-        <option value="fr">FR</option>
-        <option value="de">DE</option>
-        <option value="nl">NL</option>
-        <option value="be">BE</option>
-      </select>
-    </div>
+    <span class="niche-label">Topic</span>
+    <select id="nicheSelect" class="niche-select" onchange="onNicheChange()">
+      <option value="email-marketing">Email Marketing</option>
+      <option value="ia-tecnologia">AI &amp; Technology</option>
+      <option value="ecommerce">eCommerce &amp; Retail</option>
+      <option value="marketing-digital">Digital Marketing</option>
+      <option value="startups">Startups &amp; Business</option>
+      <option value="finanzas">Finance &amp; Economy</option>
+      <option value="salud">Health &amp; Wellness</option>
+      <option value="viajes">Travel &amp; Tourism</option>
+      <option value="deporte">Sport &amp; Fitness</option>
+      <option value="sostenibilidad">Sustainability</option>
+      <option value="custom">Custom...</option>
+    </select>
+    <input type="text" id="nicheCustom" class="niche-custom" placeholder="Your topic..." style="display:none">
+    <select id="langSelect" class="lang-select" onchange="onLangChange()">
+      <option value="es">ES</option>
+      <option value="en">EN</option>
+      <option value="it">IT</option>
+      <option value="fr">FR</option>
+      <option value="de">DE</option>
+      <option value="nl">NL</option>
+      <option value="be">BE</option>
+    </select>
   </div>
+
+  <!-- SOURCES BAR -->
   <div class="sources-bar">
-    <span class="sources-label">Fuentes:</span>
+    <span class="sources-label">Sources</span>
     <div class="source-chip active" data-src="x">X / Twitter</div>
     <div class="source-chip active" data-src="reddit">Reddit</div>
     <div class="source-chip active" data-src="linkedin">LinkedIn</div>
-    <div class="source-chip active" data-src="news">Noticias</div>
+    <div class="source-chip active" data-src="news">News</div>
   </div>
 
-  <!-- TOPICS GRID -->
+  <!-- TOPICS -->
   <div id="topicsWrap" style="display:none;">
     <div class="section-subhead">
-      <span class="subhead-title">Topics del día · <span id="topicCount">0</span> encontrados</span>
-      <span class="subhead-hint">Clic para seleccionar</span>
+      <span class="subhead-title">Today's topics</span>
+      <span class="subhead-hint">Click to select</span>
     </div>
     <div class="topics-grid" id="topicsGrid"></div>
   </div>
@@ -98,13 +96,13 @@
   <!-- ACTION BAR -->
   <div class="action-bar" id="actionBar">
     <div class="action-info">
-      <strong id="selectedCount">0</strong> topics seleccionados
+      <strong id="selectedCount">0</strong> topics selected
     </div>
-    <div style="display:flex;gap:10px;">
-      <button class="btn-clear" onclick="clearSelection()">✕ Limpiar</button>
+    <div class="action-bar-btns">
+      <button class="btn-clear" onclick="clearSelection()">✕ Clear</button>
       <button class="btn-generate" id="generateBtn" onclick="generateAll()">
         <span class="btn-spinner"></span>
-        <span class="btn-text">✦ Generar posts + newsletter</span>
+        <span class="btn-text">✦ Generate</span>
       </button>
     </div>
   </div>
@@ -115,79 +113,73 @@
     <!-- BLOG POSTS -->
     <div class="output-section">
       <div class="section-subhead">
-        <span class="subhead-title">Posts para WordPress</span>
+        <span class="subhead-title">WordPress Posts</span>
         <span class="subhead-hint" id="wpDomain"></span>
       </div>
       <div class="posts-list" id="postsList"></div>
       <div class="publish-bar">
         <button class="btn-publish" id="publishBtn" onclick="publishAll()">
           <span class="btn-spinner"></span>
-          <span class="btn-text">↑ Publicar todos en WordPress</span>
+          <span class="btn-text">↑ Publish all to WordPress</span>
         </button>
-        <span class="publish-hint">Usa la REST API con Application Password — sin plugins</span>
+        <span class="publish-hint">Uses REST API with Application Password — no plugins needed</span>
       </div>
     </div>
 
     <!-- NEWSLETTER -->
-    <div class="output-section output-section--dark">
+    <div class="output-section">
       <div class="section-subhead">
-        <span class="subhead-title">Newsletter HTML</span>
+        <span class="subhead-title">Newsletter Snippets</span>
         <span class="subhead-hint" id="nlSubject"></span>
       </div>
-
-      <!-- Email chrome -->
       <div class="email-chrome-wrap">
         <div class="email-chrome-bar">
-          <div style="display:flex;gap:5px;">
-            <div style="width:8px;height:8px;border-radius:50%;background:#ff5f57"></div>
-            <div style="width:8px;height:8px;border-radius:50%;background:#febc2e"></div>
-            <div style="width:8px;height:8px;border-radius:50%;background:#28c840"></div>
+          <div class="email-chrome-dots">
+            <div class="email-chrome-dot"></div>
+            <div class="email-chrome-dot"></div>
+            <div class="email-chrome-dot"></div>
           </div>
-          <div class="email-subject-pill" id="emailSubjectPill">Asunto: —</div>
+          <div class="email-subject-pill" id="emailSubjectPill">Subject: —</div>
         </div>
         <div id="emailPreview"></div>
       </div>
-
       <div class="nl-actions">
-        <button class="btn-copy-html" onclick="doCopyHTML()">⊕ Copiar HTML</button>
-        <button class="btn-view-src" onclick="openSrcModal()">{ } Ver código</button>
+        <button class="btn-copy-html" onclick="doCopyHTML()">⊕ Copy snippets HTML</button>
+        <button class="btn-view-src" onclick="openSrcModal()">{ } View code</button>
       </div>
     </div>
 
-  </div>
+  </div><!-- /outputWrap -->
 
 </main>
 
-<!-- WP CONFIG MODAL -->
+<!-- WP MODAL -->
 <div class="modal-overlay" id="wpModal" onclick="closeOverlay(event,'wpModal')">
   <div class="modal-box">
     <div class="modal-head">
-      <span>Configuración WordPress</span>
+      <span>WordPress Config</span>
       <button class="modal-x" onclick="closeModal('wpModal')">✕</button>
     </div>
     <div class="modal-body">
       <div class="field-group">
-        <label class="field-label">URL de tu WordPress</label>
-        <input class="field-input" id="wpUrl" type="url" placeholder="https://tudominio.com">
-        <div class="field-hint">Sin barra final. La REST API es nativa desde WP 4.7.</div>
+        <label class="field-label">WordPress URL</label>
+        <input class="field-input" id="wpUrl" type="url" placeholder="https://yourdomain.com">
+        <div class="field-hint">No trailing slash. REST API native since WP 4.7.</div>
       </div>
       <div class="field-group">
-        <label class="field-label">Usuario WordPress</label>
+        <label class="field-label">WordPress User</label>
         <input class="field-input" id="wpUser" type="text" placeholder="admin">
       </div>
       <div class="field-group">
         <label class="field-label">Application Password</label>
         <input class="field-input" id="wpAppPass" type="password" placeholder="xxxx xxxx xxxx xxxx xxxx xxxx">
-        <div class="field-hint">Genera una en WP → Usuarios → Tu perfil → Contraseñas de aplicación.</div>
+        <div class="field-hint">Generate at WP → Users → Your profile → Application passwords.</div>
       </div>
       <button class="btn-test-wp" id="testWPBtn" onclick="testWP()">
-        <span class="btn-spinner"></span><span class="btn-text">Probar conexión</span>
+        <span class="btn-spinner"></span><span class="btn-text">Test connection</span>
       </button>
       <div class="wp-test-result" id="wpTestResult"></div>
-      <button class="btn-save-wp" onclick="saveWP()">Guardar</button>
-      <div class="field-hint" style="margin-top:12px;padding:10px;background:rgba(240,192,64,0.05);border-left:2px solid var(--accent)">
-        Las credenciales se envían al servidor y se usan para publicar. Se guardan cifradas en tu sesión.
-      </div>
+      <button class="btn-save-wp" onclick="saveWP()">Save</button>
     </div>
   </div>
 </div>
@@ -196,7 +188,7 @@
 <div class="modal-overlay" id="srcModal" onclick="closeOverlay(event,'srcModal')">
   <div class="modal-box modal-box--wide">
     <div class="modal-head">
-      <span>HTML de newsletter — listo para tu ESP</span>
+      <span>Snippets HTML — paste after your header</span>
       <button class="modal-x" onclick="closeModal('srcModal')">✕</button>
     </div>
     <div class="modal-body">

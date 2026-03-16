@@ -21,26 +21,17 @@ function showToast(msg, isError, duration) {
   t._timer = setTimeout(function(){ t.className = 'toast'; }, duration);
 }
 
-// callAI — proxy to Anthropic via server
-// useFastModel=true  → claude-haiku  (scan, classify, summarise)
-// useFastModel=false → claude-sonnet (newsletter, blog posts)
-function callAI(messages, system, max_tokens, useWebSearch, useFastModel) {
+// useFastModel=true  -> haiku  (classify, summarise)
+// useFastModel=false -> sonnet (newsletter, blog posts)
+function callAI(messages, system, max_tokens, _unused, useFastModel) {
   if (max_tokens   === undefined) max_tokens   = 1500;
-  if (useWebSearch === undefined) useWebSearch = false;
   if (useFastModel === undefined) useFastModel = false;
-
-  var body = {
-    messages:       messages,
-    max_tokens:     max_tokens,
-    use_web_search: useWebSearch,
-    use_fast_model: useFastModel,
-  };
+  var body = { messages: messages, max_tokens: max_tokens, use_fast_model: useFastModel };
   if (system) body.system = system;
-
   return fetch('/api/ai/complete', {
-    method:  'POST',
+    method: 'POST',
     headers: { 'Content-Type': 'application/json' },
-    body:    JSON.stringify(body),
+    body: JSON.stringify(body),
   }).then(function(res) {
     if (res.status === 401) { window.location.href = '/login'; throw new Error('Session expired'); }
     return res.json().then(function(data) {
@@ -54,9 +45,9 @@ function publishToWP(posts, wpConfig) {
   if (!wpConfig) wpConfig = {};
   var body = Object.assign({ posts: posts }, wpConfig);
   return fetch('/api/wordpress/publish', {
-    method:  'POST',
+    method: 'POST',
     headers: { 'Content-Type': 'application/json' },
-    body:    JSON.stringify(body),
+    body: JSON.stringify(body),
   }).then(function(res) {
     if (res.status === 401) { window.location.href = '/login'; throw new Error('Session expired'); }
     return res.json();
@@ -65,9 +56,9 @@ function publishToWP(posts, wpConfig) {
 
 function testWPConnection(wpConfig) {
   return fetch('/api/wordpress/test', {
-    method:  'POST',
+    method: 'POST',
     headers: { 'Content-Type': 'application/json' },
-    body:    JSON.stringify(wpConfig),
+    body: JSON.stringify(wpConfig),
   }).then(function(res){ return res.json(); });
 }
 
@@ -76,18 +67,14 @@ function copyToClipboard(text) {
     return navigator.clipboard.writeText(text).then(function(){ return true; });
   }
   var ta = document.createElement('textarea');
-  ta.value = text;
-  ta.style.position = 'fixed';
-  ta.style.opacity  = '0';
-  document.body.appendChild(ta);
-  ta.select();
-  document.execCommand('copy');
-  document.body.removeChild(ta);
+  ta.value = text; ta.style.position = 'fixed'; ta.style.opacity = '0';
+  document.body.appendChild(ta); ta.select();
+  document.execCommand('copy'); document.body.removeChild(ta);
   return Promise.resolve(true);
 }
 
 function todayFormatted() {
-  return new Date().toLocaleDateString('es-ES', {
+  return new Date().toLocaleDateString('en-GB', {
     weekday: 'long', day: 'numeric', month: 'long', year: 'numeric'
   });
 }

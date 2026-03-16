@@ -1,200 +1,247 @@
 <!DOCTYPE html>
-<html lang="es">
+<html lang="en">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Pedri — Acceso</title>
-<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;700;800&family=Literata:ital,wght@0,300;1,300&display=swap" rel="stylesheet">
+<title>PEDRI — Sign in</title>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;700;900&family=DM+Mono:wght@300;400;500&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
 <style>
-  :root {
-    --bg: #f4f2ee;
-    --surface: #ffffff;
-    --border: #e2ddd6;
-    --border2: #cec7bd;
-    --text: #1a1916;
-    --muted: #5c564f;
-    --accent: #c49a0e;
-    --danger: #c0392b;
-  }
-  * { margin:0; padding:0; box-sizing:border-box; }
-  body {
-    background: var(--bg);
-    color: var(--text);
-    font-family: 'Literata', Georgia, serif;
-    min-height: 100vh;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    padding: 20px;
-  }
-  .login-box {
-    position: relative;
-    background: var(--surface);
-    border: 1px solid var(--border2);
-    width: 100%;
-    max-width: 380px;
-    padding: 48px 40px;
-    animation: fadeUp 0.4s ease;
-  }
-  @keyframes fadeUp {
-    from { opacity:0; transform:translateY(16px); }
-    to   { opacity:1; transform:translateY(0); }
-  }
-  .login-logo {
-    font-family: 'Syne', sans-serif;
-    font-weight: 800;
-    font-size: 26px;
-    letter-spacing: -0.5px;
-    margin-bottom: 4px;
-  }
-  .login-logo em { color: var(--accent); font-style: normal; }
-  .login-sub {
-    font-size: 12px;
-    color: var(--muted);
-    letter-spacing: 0.5px;
-    margin-bottom: 40px;
-  }
-  .field { margin-bottom: 20px; }
-  .field label {
-    display: block;
-    font-family: 'Syne', sans-serif;
-    font-size: 10px;
-    letter-spacing: 2px;
-    text-transform: uppercase;
-    color: var(--muted);
-    margin-bottom: 8px;
-  }
-  .field input {
-    width: 100%;
-    background: #f9f7f4;border: 1px solid #cec7bd;
-    color: var(--text);
-    padding: 12px 14px;
-    font-family: 'Syne', sans-serif;
-    font-size: 14px;
-    outline: none;
-    transition: border-color 0.2s;
-  }
-  .field input:focus { border-color: var(--accent); }
-  .btn-login {
-    width: 100%;
-    background: var(--accent);
-    color: #fff;
-    border: none;
-    padding: 14px;
-    font-family: 'Syne', sans-serif;
-    font-size: 13px;
-    font-weight: 700;
-    letter-spacing: 1px;
-    text-transform: uppercase;
-    cursor: pointer;
-    margin-top: 8px;
-    transition: background 0.2s;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    gap: 8px;
-  }
-  .btn-login:hover { background: #f8d060; }
-  .btn-login:disabled { background: var(--border2); color: var(--muted); cursor: not-allowed; }
-  .spinner {
-    width: 14px; height: 14px;
-    border: 2px solid rgba(0,0,0,0.3);
-    border-top-color: #000;
-    border-radius: 50%;
-    animation: spin 0.6s linear infinite;
-    display: none;
-  }
-  .btn-login.loading .spinner { display: block; }
-  @keyframes spin { to { transform: rotate(360deg); } }
-  .error-msg {
-    display: none;
-    background: rgba(240,64,96,0.1);
-    border: 1px solid rgba(240,64,96,0.3);
-    color: var(--danger);
-    padding: 10px 14px;
-    font-family: 'Syne', sans-serif;
-    font-size: 12px;
-    margin-top: 16px;
-  }
-  .error-msg.visible { display: block; }
-  .login-footer {
-    margin-top: 32px;
-    padding-top: 20px;
-    border-top: 1px solid var(--border);
-    font-family: 'Syne', sans-serif;
-    font-size: 10px;
-    color: var(--muted);
-    letter-spacing: 0.5px;
-    text-align: center;
-  }
+*, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+
+:root {
+  --bg:      #0e0e0e;
+  --surface: #1a1a1a;
+  --border:  #2a2a2a;
+  --text:    #f0ece4;
+  --muted:   #888880;
+  --subtle:  #444440;
+  --accent:  #3d9970;
+}
+
+body {
+  background: var(--bg);
+  color: var(--text);
+  font-family: 'DM Sans', sans-serif;
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  -webkit-font-smoothing: antialiased;
+}
+
+/* Subtle grid */
+body::before {
+  content: '';
+  position: fixed;
+  inset: 0;
+  background-image:
+    linear-gradient(rgba(61,153,112,0.03) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(61,153,112,0.03) 1px, transparent 1px);
+  background-size: 48px 48px;
+  pointer-events: none;
+}
+
+.login-wrap {
+  width: 100%;
+  max-width: 360px;
+  padding: 20px;
+  position: relative;
+  z-index: 1;
+}
+
+.login-header {
+  text-align: center;
+  margin-bottom: 40px;
+}
+
+.login-logo {
+  font-family: 'DM Mono', monospace;
+  font-weight: 500;
+  font-size: 11px;
+  letter-spacing: 7px;
+  color: var(--accent);
+  text-transform: uppercase;
+  display: block;
+  margin-bottom: 10px;
+}
+
+.login-title {
+  font-family: 'Playfair Display', serif;
+  font-size: 28px;
+  font-weight: 400;
+  color: var(--text);
+  letter-spacing: -.5px;
+}
+
+.login-sub {
+  font-family: 'DM Mono', monospace;
+  font-size: 10px;
+  color: var(--subtle);
+  letter-spacing: 1.5px;
+  text-transform: uppercase;
+  margin-top: 6px;
+}
+
+.login-box {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  padding: 28px 24px;
+}
+
+.login-divider {
+  height: 2px;
+  background: var(--accent);
+  width: 32px;
+  margin: 0 auto 28px;
+}
+
+.field {
+  margin-bottom: 16px;
+}
+
+.field label {
+  display: block;
+  font-family: 'DM Mono', monospace;
+  font-size: 9px;
+  letter-spacing: 2.5px;
+  text-transform: uppercase;
+  color: var(--muted);
+  margin-bottom: 7px;
+}
+
+.field input {
+  width: 100%;
+  background: #0e0e0e;
+  border: 1px solid var(--border);
+  color: var(--text);
+  padding: 11px 14px;
+  font-family: 'DM Mono', monospace;
+  font-size: 13px;
+  outline: none;
+  transition: border-color .15s;
+}
+
+.field input:focus { border-color: var(--accent); }
+.field input::placeholder { color: var(--subtle); }
+
+.btn-login {
+  width: 100%;
+  background: var(--accent);
+  color: #fff;
+  border: none;
+  padding: 13px;
+  font-family: 'DM Mono', monospace;
+  font-size: 11px;
+  font-weight: 500;
+  letter-spacing: 2px;
+  text-transform: uppercase;
+  cursor: pointer;
+  margin-top: 8px;
+  transition: background .15s;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+}
+
+.btn-login:hover { background: #52c28f; }
+
+.login-error {
+  font-family: 'DM Mono', monospace;
+  font-size: 10px;
+  color: #e05555;
+  text-align: center;
+  margin-top: 14px;
+  min-height: 16px;
+  letter-spacing: .5px;
+  display: none;
+}
+
+.login-error.visible { display: block; }
+
+.login-footer {
+  text-align: center;
+  margin-top: 24px;
+  font-family: 'DM Mono', monospace;
+  font-size: 9px;
+  color: var(--subtle);
+  letter-spacing: 1px;
+}
+
+.spinner {
+  width: 11px; height: 11px;
+  border: 1.5px solid rgba(255,255,255,0.3);
+  border-top-color: #fff;
+  border-radius: 50%;
+  animation: spin .55s linear infinite;
+  display: none;
+}
+@keyframes spin { to { transform: rotate(360deg); } }
+.loading .spinner { display: block; }
+.loading .btn-text { display: none; }
 </style>
 </head>
 <body>
-<div class="login-box">
-  <div class="login-logo">PEDRI</div>
-  <div class="login-sub">Herramientas internas de contenido con IA</div>
-
-  <div class="field">
-    <label>Usuario</label>
-    <input type="text" id="username" autocomplete="username" autofocus />
-  </div>
-  <div class="field">
-    <label>Contraseña</label>
-    <input type="password" id="password" autocomplete="current-password" />
+<div class="login-wrap">
+  <div class="login-header">
+    <span class="login-logo">PEDRI</span>
+    <h1 class="login-title">Welcome back.</h1>
+    <p class="login-sub">Content intelligence platform</p>
   </div>
 
-  <button class="btn-login" id="loginBtn" onclick="doLogin()">
-    <span class="spinner"></span>
-    Entrar
-  </button>
+  <div class="login-box">
+    <div class="login-divider"></div>
+    <form id="loginForm">
+      <div class="field">
+        <label>Username</label>
+        <input type="text" id="username" name="username" autocomplete="username" placeholder="Enter username" required>
+      </div>
+      <div class="field">
+        <label>Password</label>
+        <input type="password" id="password" name="password" autocomplete="current-password" placeholder="••••••••" required>
+      </div>
+      <button type="submit" class="btn-login" id="loginBtn">
+        <span class="spinner"></span>
+        <span class="btn-text">Sign in</span>
+      </button>
+    </form>
+    <div class="login-error" id="loginError"></div>
+  </div>
 
-  <div class="error-msg" id="errorMsg">Credenciales incorrectas</div>
-
-  <div class="login-footer">Acceso restringido · Uso interno</div>
+  <div class="login-footer">Restricted access &mdash; authorized users only</div>
 </div>
 
 <script>
-  // Permitir Enter para hacer login
-  document.addEventListener('keydown', e => {
-    if (e.key === 'Enter') doLogin();
-  });
+document.getElementById('loginForm').addEventListener('submit', async function(e) {
+  e.preventDefault();
+  var btn = document.getElementById('loginBtn');
+  var err = document.getElementById('loginError');
+  btn.classList.add('loading');
+  err.classList.remove('visible');
 
-  async function doLogin() {
-    const btn = document.getElementById('loginBtn');
-    const err = document.getElementById('errorMsg');
-    const username = document.getElementById('username').value.trim();
-    const password = document.getElementById('password').value;
-
-    if (!username || !password) return;
-
-    btn.disabled = true;
-    btn.classList.add('loading');
-    err.classList.remove('visible');
-
-    try {
-      const res = await fetch('/auth/login', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ username, password }),
-      });
-
-      const data = await res.json();
-
-      if (res.ok && data.ok) {
-        window.location.href = data.redirect || '/';
-      } else {
-        err.textContent = data.error || 'Credenciales incorrectas';
-        err.classList.add('visible');
-        document.getElementById('password').value = '';
-      }
-    } catch(e) {
-      err.textContent = 'Error de conexión con el servidor';
+  try {
+    var res = await fetch('/auth/login', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        username: document.getElementById('username').value,
+        password: document.getElementById('password').value,
+      }),
+    });
+    var data = await res.json();
+    if (res.ok && data.ok) {
+      window.location.href = '/';
+    } else {
+      err.textContent = data.error || 'Invalid credentials';
       err.classList.add('visible');
     }
-
-    btn.disabled = false;
+  } catch(e) {
+    err.textContent = 'Connection error';
+    err.classList.add('visible');
+  } finally {
     btn.classList.remove('loading');
   }
+});
 </script>
 </body>
 </html>

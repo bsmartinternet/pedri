@@ -3,61 +3,126 @@
 const express = require('express');
 const router  = express.Router();
 
-const MODEL_FAST    = 'claude-haiku-4-5-20251001';   // scan, classification, summaries
-const MODEL_CONTENT = 'claude-sonnet-4-20250514';     // newsletter, blog posts
+const MODEL_FAST    = 'claude-haiku-4-5-20251001';
+const MODEL_CONTENT = 'claude-sonnet-4-20250514';
+
+// In-memory cache: "niche|lang" -> { topics, expiresAt }
+const searchCache = new Map();
+const CACHE_TTL   = 6 * 60 * 60 * 1000; // 6 hours
+
+function getCached(key) {
+  const e = searchCache.get(key);
+  if (!e) return null;
+  if (Date.now() > e.expiresAt) { searchCache.delete(key); return null; }
+  return e.topics;
+}
+
+function setCache(key, topics) {
+  searchCache.set(key, { topics, expiresAt: Date.now() + CACHE_TTL });
+}
+
+// POST /api/search/topics
+// Brave News -> Haiku classify -> cache 6h
+router.post('/search/topics', async (req, res) => {
+  const { niche, lang, promptLang } = req.body;
+  if (!niche || !lang) return res.status(400).json({ error: 'niche and lang required' });
+
+  const cacheKey = niche + '|' + lang;
+  const cached = getCached(cacheKey);
+  if (cached) {
+    console.log('[Search] Cache hit:', cacheKey);
+    return res.json({ topics: cached, fromCache: true });
+  }
+
+  const braveKey = process.env.BRAVE_SEARCH_API_KEY;
+  if (!braveKey) return res.status(500).json({ error: 'BRAVE_SEARCH_API_KEY not configured' });
+
+  try {
+    // Step 1: Brave News Search
+    const query    = encodeURIComponent(niche + ' news today');
+    const braveRes = await fetch(
+      'https://api.search.brave.com/res/v1/news/search?q=' + query + '&count=10&freshness=pd',
+      { headers: { 'Accept': 'application/json', 'Accept-Encoding': 'gzip', 'X-Subscription-Token': braveKey } }
+    );
+
+    if (!braveRes.ok) {
+      const txt = await braveRes.text();
+      console.error('[Brave Error]', braveRes.status, txt);
+      return res.status(502).json({ error: 'Brave Search error ' + braveRes.status });
+    }
+
+    const braveData = await braveRes.json();
+    const articles  = (braveData.results || []).slice(0, 10);
+    if (articles.length === 0) return res.status(404).json({ error: 'No results from Brave Search' });
+
+    // Step 2: Haiku classifies sentiment + formats JSON
+    const articleList = articles.map((a, i) =>
+      (i + 1) + '. "' + a.title + '" — ' + (a.source || (a.meta_url && a.meta_url.hostname) || 'unknown') + ' — ' + a.url
+    ).join('\n');
+
+    const prompt = 'Classify these ' + articles.length + ' news articles about "' + niche + '" and return JSON.\n\nArticles:\n' + articleList + '\n\nFor each: classify sentiment and estimate reach. Write titles ' + (promptLang || 'in English') + ' if translation needed.\n\nReturn ONLY valid JSON no backticks:\n{"topics":[{"title":"headline","source":"outlet","sourceUrl":"https://url","engagement":"est. reach","sent":"Positive","sentClass":"sent-up"}]}\n\nsentClass: sent-up=Positive, sent-down=Negative, sent-mix=Mixed.';
+
+    const aiRes = await fetch('https://api.anthropic.com/v1/messages', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'x-api-key': process.env.ANTHROPIC_API_KEY, 'anthropic-version': '2023-06-01' },
+      body: JSON.stringify({ model: MODEL_FAST, max_tokens: 600, messages: [{ role: 'user', content: prompt }] }),
+    });
+
+    const aiData = await aiRes.json();
+    if (!aiRes.ok) {
+      console.error('[Haiku Error]', JSON.stringify(aiData));
+      return res.status(aiRes.status).json({ error: aiData.error?.message || 'AI error' });
+    }
+
+    const text  = (aiData.content || []).map(b => b.text || '').join('');
+    const clean = text.replace(/```json|```/g, '').trim();
+    const match = clean.match(/\{[\s\S]*\}/);
+    const data  = JSON.parse(match ? match[0] : clean);
+
+    console.log('[Search] OK:', cacheKey, '— topics:', (data.topics || []).length, '— tokens:', JSON.stringify(aiData.usage));
+    setCache(cacheKey, data.topics);
+    res.json({ topics: data.topics, fromCache: false });
+
+  } catch (err) {
+    console.error('[Search error]', err.message);
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// DELETE /api/search/cache
+router.delete('/search/cache', (req, res) => {
+  const n = searchCache.size;
+  searchCache.clear();
+  res.json({ cleared: n });
+});
 
 // POST /api/ai/complete
 router.post('/ai/complete', async (req, res) => {
-  const {
-    messages,
-    system,
-    max_tokens    = 1500,
-    use_web_search = false,
-    use_fast_model = false,
-  } = req.body;
-
-  if (!messages || !Array.isArray(messages)) {
-    return res.status(400).json({ error: 'messages required and must be array' });
-  }
+  const { messages, system, max_tokens = 1500, use_fast_model = false } = req.body;
+  if (!messages || !Array.isArray(messages)) return res.status(400).json({ error: 'messages required' });
 
   try {
     const model = use_fast_model ? MODEL_FAST : MODEL_CONTENT;
-
-    const body = { model, max_tokens, messages };
+    const body  = { model, max_tokens, messages };
     if (system) body.system = system;
-    if (use_web_search) {
-      body.tools = [{ type: 'web_search_20250305', name: 'web_search' }];
-    }
 
-    const headers = {
-      'Content-Type':      'application/json',
-      'x-api-key':         process.env.ANTHROPIC_API_KEY,
-      'anthropic-version': '2023-06-01',
-    };
-    if (use_web_search) {
-      headers['anthropic-beta'] = 'web-search-2025-03-05';
-    }
-
-    console.log(`[AI] model=${model} web_search=${use_web_search} max_tokens=${max_tokens}`);
+    console.log('[AI] model=' + model + ' max_tokens=' + max_tokens);
 
     const response = await fetch('https://api.anthropic.com/v1/messages', {
       method: 'POST',
-      headers,
+      headers: { 'Content-Type': 'application/json', 'x-api-key': process.env.ANTHROPIC_API_KEY, 'anthropic-version': '2023-06-01' },
       body: JSON.stringify(body),
     });
 
     const data = await response.json();
-
     if (!response.ok) {
       console.error('[Anthropic Error]', JSON.stringify(data));
       return res.status(response.status).json({ error: data.error?.message || 'Anthropic error' });
     }
 
-    const text = (data.content || []).map(b => b.text || '').join('');
-    res.json({ text, usage: data.usage });
-
+    res.json({ text: (data.content || []).map(b => b.text || '').join(''), usage: data.usage });
   } catch (err) {
-    console.error('[Anthropic fetch error]', err.message);
+    console.error('[Anthropic error]', err.message);
     res.status(500).json({ error: 'Error connecting to Anthropic' });
   }
 });
@@ -65,42 +130,25 @@ router.post('/ai/complete', async (req, res) => {
 // POST /api/wordpress/publish
 router.post('/wordpress/publish', async (req, res) => {
   const { posts, wp_url, wp_user, wp_password, status = 'publish' } = req.body;
-
-  if (!posts || !Array.isArray(posts) || posts.length === 0) {
-    return res.status(400).json({ error: 'posts must be a non-empty array' });
-  }
+  if (!posts || !Array.isArray(posts) || posts.length === 0) return res.status(400).json({ error: 'posts required' });
 
   const baseUrl = (wp_url || process.env.WP_URL || '').replace(/\/$/, '');
   const user    = wp_user     || process.env.WP_USER;
   const pass    = wp_password || process.env.WP_APP_PASSWORD;
+  if (!baseUrl || !user || !pass) return res.status(400).json({ error: 'Missing WordPress credentials' });
 
-  if (!baseUrl || !user || !pass) {
-    return res.status(400).json({ error: 'Missing WordPress credentials' });
-  }
-
-  const token    = Buffer.from(user + ':' + pass).toString('base64');
-  const endpoint = baseUrl + '/wp-json/wp/v2/posts';
-  const results  = [];
+  const token = Buffer.from(user + ':' + pass).toString('base64');
+  const results = [];
 
   for (const post of posts) {
     try {
-      const wpRes = await fetch(endpoint, {
+      const wpRes = await fetch(baseUrl + '/wp-json/wp/v2/posts', {
         method: 'POST',
-        headers: {
-          'Content-Type':  'application/json',
-          'Authorization': 'Basic ' + token,
-        },
-        body: JSON.stringify({
-          title:   post.title,
-          content: post.content || '',
-          excerpt: post.excerpt || '',
-          status,
-          ...(post.categories ? { categories: post.categories } : {}),
-          ...(post.tags       ? { tags: post.tags }             : {}),
-        }),
+        headers: { 'Content-Type': 'application/json', 'Authorization': 'Basic ' + token },
+        body: JSON.stringify({ title: post.title, content: post.content || '', excerpt: post.excerpt || '', status }),
       });
       const json = await wpRes.json();
-      if (wpRes.ok) results.push({ ok: true,  id: json.id, link: json.link, title: post.title });
+      if (wpRes.ok) results.push({ ok: true, id: json.id, link: json.link, title: post.title });
       else          results.push({ ok: false, title: post.title, error: json.message || wpRes.status });
     } catch (err) {
       results.push({ ok: false, title: post.title, error: err.message });
@@ -116,22 +164,14 @@ router.post('/wordpress/test', async (req, res) => {
   const baseUrl = (wp_url || process.env.WP_URL || '').replace(/\/$/, '');
   const user    = wp_user     || process.env.WP_USER;
   const pass    = wp_password || process.env.WP_APP_PASSWORD;
-
-  if (!baseUrl || !user || !pass) {
-    return res.status(400).json({ ok: false, error: 'Missing connection data' });
-  }
+  if (!baseUrl || !user || !pass) return res.status(400).json({ ok: false, error: 'Missing data' });
 
   try {
     const token = Buffer.from(user + ':' + pass).toString('base64');
-    const wpRes = await fetch(baseUrl + '/wp-json/wp/v2/users/me', {
-      headers: { 'Authorization': 'Basic ' + token },
-    });
-    if (wpRes.ok) {
-      const d = await wpRes.json();
-      return res.json({ ok: true, wp_user: d.name, wp_url: baseUrl });
-    }
-    const err = await wpRes.json();
-    res.status(401).json({ ok: false, error: err.message || 'Invalid credentials' });
+    const r = await fetch(baseUrl + '/wp-json/wp/v2/users/me', { headers: { 'Authorization': 'Basic ' + token } });
+    if (r.ok) { const d = await r.json(); return res.json({ ok: true, wp_user: d.name, wp_url: baseUrl }); }
+    const e = await r.json();
+    res.status(401).json({ ok: false, error: e.message || 'Invalid credentials' });
   } catch (err) {
     res.status(500).json({ ok: false, error: 'Could not connect: ' + err.message });
   }
