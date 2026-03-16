@@ -56,49 +56,51 @@ router.post('/search/topics', async (req, res) => {
     if (articles.length === 0) return res.status(404).json({ error: 'No results from Brave Search' });
 
     // Step 2: Haiku classifies sentiment + formats JSON
-    // Build article list — sanitize titles to avoid breaking JSON
-    const articleList = articles.map((a, i) => {
-      const title  = (a.title || '').replace(/"/g, "'").replace(/[\r\n]/g, ' ').slice(0, 120);
-      const source = (a.source || (a.meta_url && a.meta_url.hostname) || 'unknown').slice(0, 40);
-      const url    = (a.url || '').slice(0, 200);
-      return (i + 1) + '. TITLE: ' + title + ' | SOURCE: ' + source + ' | URL: ' + url;
-    }).join('\n');
+    // Ask Haiku ONLY for sentiment by index — never ask it to repeat titles
+    // This avoids all JSON escaping issues with special characters in headlines
+    const articleList = articles.map((a, i) =>
+      (i + 1) + '. ' + (a.title || '').replace(/[\r\n]/g, ' ').slice(0, 150)
+    ).join('\n');
 
-    // Strict prompt — numbered list format avoids quote escaping issues
-    const prompt = 'You are a JSON API. Classify these news articles about "' + niche + '".\n\nArticles:\n' + articleList + '\n\nReturn a JSON array. For each article use the exact title and URL from the input. Sentiment: Positive/Negative/Mixed.\n\nRules:\n- Escape all quotes inside strings\n- No trailing commas\n- sentClass: sent-up=Positive, sent-down=Negative, sent-mix=Mixed\n- engagement: short string like "High impact" or "Trending"\n\nReturn ONLY this JSON, no explanation, no backticks:\n{"topics":[{"title":"...","source":"...","sourceUrl":"...","engagement":"...","sent":"Positive","sentClass":"sent-up"}]}';
+    const prompt = 'Classify the sentiment of each article as Positive, Negative or Mixed. Reply with ONLY a JSON array of objects, one per article, in order. No backticks, no explanation.\n\nArticles about "' + niche + '":\n' + articleList + '\n\nFormat: [{"i":1,"sent":"Positive","sentClass":"sent-up"},{"i":2,"sent":"Negative","sentClass":"sent-down"},...]\nsentClass: sent-up=Positive, sent-down=Negative, sent-mix=Mixed.';
 
     const aiRes = await fetch('https://api.anthropic.com/v1/messages', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json', 'x-api-key': process.env.ANTHROPIC_API_KEY, 'anthropic-version': '2023-06-01' },
-      body: JSON.stringify({ model: MODEL_FAST, max_tokens: 800, messages: [{ role: 'user', content: prompt }] }),
+      body: JSON.stringify({ model: MODEL_FAST, max_tokens: 300, messages: [{ role: 'user', content: prompt }] }),
     });
 
     const aiData = await aiRes.json();
-    if (!aiRes.ok) {
+
+    // Parse sentiment array — fall back to Mixed for all if anything fails
+    let sentiments = [];
+    if (aiRes.ok) {
+      try {
+        const text  = (aiData.content || []).map(b => b.text || '').join('');
+        const clean = text.replace(/```json|```/g, '').trim();
+        const match = clean.match(/\[[\s\S]*\]/);
+        sentiments  = JSON.parse(match ? match[0] : clean);
+      } catch (e) {
+        console.warn('[Haiku sentiment parse failed]', e.message);
+      }
+    } else {
       console.error('[Haiku Error]', JSON.stringify(aiData));
-      return res.status(aiRes.status).json({ error: aiData.error?.message || 'AI error' });
     }
 
-    const text  = (aiData.content || []).map(b => b.text || '').join('');
-    let data;
-    // Try to parse Haiku JSON — fall back to raw Brave data if anything fails
-    try {
-      const clean = text.replace(/```json|```/g, '').trim();
-      const match = clean.match(/\{[\s\S]*\}/);
-      data = JSON.parse(match ? match[0] : clean);
-    } catch (parseErr) {
-      console.warn('[Haiku parse failed, using Brave directly]', parseErr.message);
-      data = {
-        topics: articles.map(a => ({
-          title:      (a.title || '').replace(/"/g, "'").slice(0, 120),
+    // Build topics from Brave data + Haiku sentiment — Brave is the source of truth
+    const data = {
+      topics: articles.map((a, i) => {
+        const s = sentiments.find(x => x.i === i + 1) || { sent: 'Mixed', sentClass: 'sent-mix' };
+        return {
+          title:      (a.title || '').slice(0, 120),
           source:     a.source || (a.meta_url && a.meta_url.hostname) || 'News',
           sourceUrl:  a.url || '',
           engagement: 'Trending',
-          sent:       'Mixed',
-          sentClass:  'sent-mix',
-        }))
-      };
-    }
+          sent:       s.sent      || 'Mixed',
+          sentClass:  s.sentClass || 'sent-mix',
+        };
+      })
+    };
 
     console.log('[Search] OK:', cacheKey, '— topics:', (data.topics || []).length, '— tokens:', JSON.stringify(aiData.usage));
     setCache(cacheKey, data.topics);
