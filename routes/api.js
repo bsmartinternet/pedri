@@ -80,18 +80,17 @@ router.post('/search/topics', async (req, res) => {
     }
 
     const text  = (aiData.content || []).map(b => b.text || '').join('');
-    const clean = text.replace(/```json|```/g, '').trim();
-    const match = clean.match(/\{[\s\S]*\}/);
-    if (!match) throw new Error('No JSON in Haiku response: ' + clean.slice(0, 200));
     let data;
+    // Try to parse Haiku JSON — fall back to raw Brave data if anything fails
     try {
-      data = JSON.parse(match[0]);
+      const clean = text.replace(/```json|```/g, '').trim();
+      const match = clean.match(/\{[\s\S]*\}/);
+      data = JSON.parse(match ? match[0] : clean);
     } catch (parseErr) {
-      // Last resort: build topics directly from Brave data skipping Haiku
-      console.warn('[Haiku JSON parse failed] Falling back to Brave data directly:', parseErr.message);
+      console.warn('[Haiku parse failed, using Brave directly]', parseErr.message);
       data = {
         topics: articles.map(a => ({
-          title:      (a.title || '').slice(0, 120),
+          title:      (a.title || '').replace(/"/g, "'").slice(0, 120),
           source:     a.source || (a.meta_url && a.meta_url.hostname) || 'News',
           sourceUrl:  a.url || '',
           engagement: 'Trending',
