@@ -56,16 +56,21 @@ router.post('/search/topics', async (req, res) => {
     if (articles.length === 0) return res.status(404).json({ error: 'No results from Brave Search' });
 
     // Step 2: Haiku classifies sentiment + formats JSON
-    const articleList = articles.map((a, i) =>
-      (i + 1) + '. "' + a.title + '" — ' + (a.source || (a.meta_url && a.meta_url.hostname) || 'unknown') + ' — ' + a.url
-    ).join('\n');
+    // Build article list — sanitize titles to avoid breaking JSON
+    const articleList = articles.map((a, i) => {
+      const title  = (a.title || '').replace(/"/g, "'").replace(/[\r\n]/g, ' ').slice(0, 120);
+      const source = (a.source || (a.meta_url && a.meta_url.hostname) || 'unknown').slice(0, 40);
+      const url    = (a.url || '').slice(0, 200);
+      return (i + 1) + '. TITLE: ' + title + ' | SOURCE: ' + source + ' | URL: ' + url;
+    }).join('\n');
 
-    const prompt = 'Classify these ' + articles.length + ' news articles about "' + niche + '" and return JSON.\n\nArticles:\n' + articleList + '\n\nFor each: classify sentiment and estimate reach. Write titles ' + (promptLang || 'in English') + ' if translation needed.\n\nReturn ONLY valid JSON no backticks:\n{"topics":[{"title":"headline","source":"outlet","sourceUrl":"https://url","engagement":"est. reach","sent":"Positive","sentClass":"sent-up"}]}\n\nsentClass: sent-up=Positive, sent-down=Negative, sent-mix=Mixed.';
+    // Strict prompt — numbered list format avoids quote escaping issues
+    const prompt = 'You are a JSON API. Classify these news articles about "' + niche + '".\n\nArticles:\n' + articleList + '\n\nReturn a JSON array. For each article use the exact title and URL from the input. Sentiment: Positive/Negative/Mixed.\n\nRules:\n- Escape all quotes inside strings\n- No trailing commas\n- sentClass: sent-up=Positive, sent-down=Negative, sent-mix=Mixed\n- engagement: short string like "High impact" or "Trending"\n\nReturn ONLY this JSON, no explanation, no backticks:\n{"topics":[{"title":"...","source":"...","sourceUrl":"...","engagement":"...","sent":"Positive","sentClass":"sent-up"}]}';
 
     const aiRes = await fetch('https://api.anthropic.com/v1/messages', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json', 'x-api-key': process.env.ANTHROPIC_API_KEY, 'anthropic-version': '2023-06-01' },
-      body: JSON.stringify({ model: MODEL_FAST, max_tokens: 600, messages: [{ role: 'user', content: prompt }] }),
+      body: JSON.stringify({ model: MODEL_FAST, max_tokens: 800, messages: [{ role: 'user', content: prompt }] }),
     });
 
     const aiData = await aiRes.json();
@@ -77,7 +82,24 @@ router.post('/search/topics', async (req, res) => {
     const text  = (aiData.content || []).map(b => b.text || '').join('');
     const clean = text.replace(/```json|```/g, '').trim();
     const match = clean.match(/\{[\s\S]*\}/);
-    const data  = JSON.parse(match ? match[0] : clean);
+    if (!match) throw new Error('No JSON in Haiku response: ' + clean.slice(0, 200));
+    let data;
+    try {
+      data = JSON.parse(match[0]);
+    } catch (parseErr) {
+      // Last resort: build topics directly from Brave data skipping Haiku
+      console.warn('[Haiku JSON parse failed] Falling back to Brave data directly:', parseErr.message);
+      data = {
+        topics: articles.map(a => ({
+          title:      (a.title || '').slice(0, 120),
+          source:     a.source || (a.meta_url && a.meta_url.hostname) || 'News',
+          sourceUrl:  a.url || '',
+          engagement: 'Trending',
+          sent:       'Mixed',
+          sentClass:  'sent-mix',
+        }))
+      };
+    }
 
     console.log('[Search] OK:', cacheKey, '— topics:', (data.topics || []).length, '— tokens:', JSON.stringify(aiData.usage));
     setCache(cacheKey, data.topics);
