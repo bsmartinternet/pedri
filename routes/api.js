@@ -41,7 +41,7 @@ router.post('/search/topics', async (req, res) => {
     // Step 1: Brave News Search
     const query    = encodeURIComponent(niche + ' news today');
     const braveRes = await fetch(
-      'https://api.search.brave.com/res/v1/news/search?q=' + query + '&count=10&freshness=pd',
+      'https://api.search.brave.com/res/v1/news/search?q=' + query + '&count=10&freshness=pd&sort=popularity',
       { headers: { 'Accept': 'application/json', 'Accept-Encoding': 'gzip', 'X-Subscription-Token': braveKey } }
     );
 
